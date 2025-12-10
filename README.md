@@ -1,5 +1,5 @@
  <div align="center">
-    <img src="img/main-method.png" alt="Method" style="width:95%;">
+    <img src="img/main-method.png" alt="Method" style="width:85%;">
 </div> 
 
 # AccelOpt: Self-improving Agents for AI Accelerator Kernel Optimization
@@ -19,7 +19,7 @@ AMI: Deep Learning AMI Neuron (Ubuntu 22.04)
 
 ### Install
 ```
-source /opt/aws_neuronx_venv_pytorch_2_6/bin/activate # Check the PyTorch version of your AMI
+source /opt/aws_neuronx_venv_pytorch_2_7/bin/activate # Check the PyTorch version of your AMI
 pip install logfire
 pip install openai-agents
 git clone git@github.com:zhang677/AccelOpt.git
