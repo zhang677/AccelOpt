@@ -53,7 +53,15 @@ NKIBench estimates the best achievable performance offered by the Trainium hardw
 
 
 # Citation
+
+This work is a follow-up to *Adaptive Self-improvement LLM Agentic System for ML Library Development* (ICML 2025) [[paper](https://arxiv.org/pdf/2502.02534)] [[blog](https://zhang677.github.io/blog_md/aspl.html)] [[code](https://github.com/zhang677/PCL-lite)]. If you find this project useful, please cite:
 ```
+@inproceedings{zhang2025adaptive,
+  title={Adaptive Self-improvement LLM Agentic System for ML Library Development},
+  author={Zhang, Genghan and Liang, Weixin and Hsu, Olivia and Olukotun, Kunle},
+  booktitle={Forty-second International Conference on Machine Learning}
+}
+
 @article{zhang2025accelopt,
   title={AccelOpt: A Self-Improving LLM Agentic System for AI Accelerator Kernel Optimization},
   author={Zhang, Genghan and Zhu, Shaowei and Wei, Anjiang and Song, Zhenyu and Nie, Allen and Jia, Zhen and Vijaykumar, Nandita and Wang, Yida and Olukotun, Kunle},
