@@ -1,0 +1,30 @@
+An agent has analyzed the baseline NKI kernel with a list of optimization plans.
+Please concretize the optimization plan and optimize the `kernel` function.
+Only use existing NKI APIs in the baseline kernel. Do not invent new APIs even if the optimization plan suggests it.
+Don't use lower precision than the baseline kernel even if the optimization plan suggests it.
+
+# Problem
+```
+{problem_code}
+```
+
+# Baseline NKI kernel
+```
+{kernel_code}
+```
+
+# Kernel usage
+```
+if __name__ == "__main__":
+    inputs = get_inputs()
+    ref_output = forward(*inputs)
+    kernel_output = transform_nki_outputs(kernel(*transform_to_nki_inputs(inputs)), ref_output)
+    assert np.allclose(kernel_output, ref_output, atol=1e-4, rtol=1e-2)
+```
+
+# Optimization plan
+```
+{optimization_plan}
+```
+
+Output the optimized `kernel` function wrapped in code block.

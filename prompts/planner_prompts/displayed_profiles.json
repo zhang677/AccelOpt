@@ -1,0 +1,19 @@
+[   
+    "latency",
+    "hbm_read_bytes",
+    "hbm_write_bytes",
+    "psum_read_bytes",
+    "psum_write_bytes",
+    "sbuf_read_bytes",
+    "sbuf_write_bytes",
+    "spill_reload_bytes",
+    "spill_save_bytes",
+    "hardware_flops",
+    "transpose_flops",
+    "peak_flops_bandwidth_ratio",
+    "mm_arithmetic_intensity",
+    "hfu_estimated_percent",
+    "scalar_engine_active_time_percent",
+    "vector_engine_active_time_percent",
+    "gpsimd_engine_active_time_percent"
+]

@@ -1,0 +1,20 @@
+test_name: bmm_softmax
+
+parameters:
+- B
+- K
+- M
+- N
+
+input: |
+  lhs = np.random.normal(loc=0, scale=1.0, size=(B, M, K)).astype(np.float32)
+  rhs = np.random.normal(loc=0, scale=1.0, size=(B, K, N)).astype(np.float32)
+  return [lhs, rhs]
+
+impl: |
+  def forward(lhs, rhs):
+    x = np.matmul(lhs, rhs)
+    max_x = np.max(x, axis=2, keepdims=True)
+    exp_x = np.exp(x - max_x)
+    sum_exp = np.sum(exp_x, axis=2, keepdims=True)
+    return exp_x / sum_exp

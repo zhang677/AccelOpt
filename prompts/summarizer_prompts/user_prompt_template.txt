@@ -1,0 +1,12 @@
+# Slow kernel
+```
+{slow_kernel}
+```
+
+# Fast kernel
+```
+{fast_kernel}
+```
+
+# Speedup
+{speedup}

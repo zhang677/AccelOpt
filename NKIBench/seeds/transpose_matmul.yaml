@@ -1,0 +1,15 @@
+test_name: transpose_matmul
+
+parameters:
+- M
+- K
+- N
+
+input: |
+  lhs_t = np.random.normal(loc=0, scale=1.0, size=(K, M)).astype(np.float32)
+  rhs = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  return [lhs_t, rhs]
+
+impl: |
+  def forward(lhs_t, rhs):
+    return np.matmul(np.transpose(lhs_t, axes=(1, 0)), rhs)

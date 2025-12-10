@@ -1,0 +1,15 @@
+test_name: matmul
+
+parameters:
+- M
+- N
+- K
+
+input: |
+  lhs = np.random.normal(loc=0, scale=1.0, size=(M, K)).astype(np.float32)
+  rhs = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  return [lhs, rhs]
+
+impl: |
+  def forward(lhs, rhs):
+    return np.matmul(lhs, rhs)

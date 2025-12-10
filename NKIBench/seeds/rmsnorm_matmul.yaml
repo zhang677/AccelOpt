@@ -1,0 +1,30 @@
+test_name: rmsnorm_matmul
+
+parameters:
+- M
+- N
+- K
+
+input: |
+  x = np.random.normal(loc=0, scale=1.0, size=(M, K)).astype(np.float32)
+  w = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  return [x, w]
+
+impl: |
+  def forward(input_tensor, weight_matrix):
+    # RMSNorm calculations
+    squared_input = np.square(input_tensor)
+    scaled_square = np.divide(squared_input, K)
+
+    rms_sum = np.sum(scaled_square, axis=1, keepdims=True)
+    rms_norm = np.sqrt(rms_sum)
+
+    normalized = np.divide(input_tensor, rms_norm)
+
+    # Matrix multiplication
+    matmul_result = np.matmul(normalized, weight_matrix)
+
+    return matmul_result
+
+comments: |
+  This is a simple RMSNorm (without learnable parameters) + Matmul kernel. NeuronPy compiler can lower this.

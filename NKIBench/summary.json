@@ -1,0 +1,258 @@
+{
+    "swiglu": {
+        "seed": "./seeds/swiglu.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "K": 1024,
+                    "M": 4096,
+                    "N": 3072
+                },
+                "impls": [
+                    {
+                        "task": "./reference/swiglu_M4096_N3072_K1024_numpy_2.py",
+                        "kernel": "./kernels/swiglu_M4096_N3072_K1024_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "matmul_add_rmsnorm": {
+        "seed": "./seeds/matmul_add_rmsnorm.yaml",
+        "cases": {
+            "1": {
+                "values": {
+                    "K": 2048,
+                    "M": 4096,
+                    "N": 2048
+                },
+                "impls": [
+                    {
+                        "task": "./reference/matmul_add_rmsnorm_M4096_N2048_K2048_numpy_1.py",
+                        "kernel": "./kernels/matmul_add_rmsnorm_M4096_N2048_K2048_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "add_rmsnorm_matmul": {
+        "seed": "./seeds/add_rmsnorm_matmul.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "K": 1024,
+                    "M": 4096,
+                    "N": 2048
+                },
+                "impls": [
+                    {
+                        "task": "./reference/add_rmsnorm_matmul_M4096_N2048_K1024_numpy_1.py",
+                        "kernel": "./kernels/add_rmsnorm_matmul_M4096_N2048_K1024_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "matmul": {
+        "seed": "./seeds/matmul.yaml",
+        "cases": {
+            "3": {
+                "values": {
+                    "K": 5120,
+                    "M": 4096,
+                    "N": 12288
+                },
+                "impls": [
+                    {
+                        "task": "./reference/matmul_M4096_N12288_K5120_numpy_2.py",
+                        "kernel": "./kernels/matmul_M4096_N12288_K5120_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "gqa_full": {
+        "seed": "./seeds/gqa_full.yaml",
+        "cases": {
+            "0": {
+                "values": {
+                    "B": 1,
+                    "D": 128,
+                    "KH": 8,
+                    "N": 4096,
+                    "QH": 16
+                },
+                "impls": [
+                    {
+                        "task": "./reference/gqa_full_B1_N4096_QH16_KH8_D128_numpy_2.py",
+                        "kernel": "./kernels/gqa_full_B1_N4096_QH16_KH8_D128_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "rmsnorm_matmul": {
+        "seed": "./seeds/rmsnorm_matmul.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "K": 1024,
+                    "M": 4096,
+                    "N": 2048
+                },
+                "impls": [
+                    {
+                        "task": "./reference/rmsnorm_matmul_M4096_N2048_K1024_numpy_1.py",
+                        "kernel": "./kernels/rmsnorm_matmul_M4096_N2048_K1024_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "rope_single_freq_apply": {
+        "seed": "./seeds/rope_single_freq_apply.yaml",
+        "cases": {
+            "1": {
+                "values": {
+                    "B": 1,
+                    "H": 64,
+                    "N": 4096,
+                    "D": 128
+                },
+                "impls": [
+                    {
+                        "task": "./reference/rope_single_freq_apply_B1_H64_N4096_D128_numpy_1.py",
+                        "kernel": "./kernels/rope_single_freq_apply_B1_H64_N4096_D128_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "bmm": {
+        "seed": "./seeds/bmm.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "B": 16,
+                    "K": 64,
+                    "M": 4096,
+                    "N": 4096
+                },
+                "impls": [
+                    {
+                        "task": "./reference/bmm_B16_M4096_K64_N4096_numpy_1.py",
+                        "kernel": "./kernels/bmm_B16_M4096_K64_N4096_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "bmm_softmax": {
+        "seed": "./seeds/bmm_softmax.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "B": 16,
+                    "K": 64,
+                    "M": 4096,
+                    "N": 4096
+                },
+                "impls": [
+                    {
+                        "task": "./reference/bmm_softmax_B16_K64_M4096_N4096_numpy_1.py",
+                        "kernel": "./kernels/bmm_softmax_B16_K64_M4096_N4096_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "transpose_matmul": {
+        "seed": "./seeds/transpose_matmul.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "K": 2048,
+                    "M": 4096,
+                    "N": 10944
+                },
+                "impls": [
+                    {
+                        "task": "./reference/transpose_matmul_M4096_K2048_N10944_numpy_1.py",
+                        "kernel": "./kernels/transpose_matmul_M4096_K2048_N10944_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "lora": {
+        "seed": "./seeds/lora.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "K": 5120,
+                    "M": 4096,
+                    "N": 12288,
+                    "R": 128
+                },
+                "impls": [
+                    {
+                        "task": "./reference/lora_M4096_N12288_K5120_R128_numpy_1.py",
+                        "kernel": "./kernels/lora_M4096_N12288_K5120_R128_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "adamw": {
+        "seed": "./seeds/adamw.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "M": 10944,
+                    "N": 2048
+                },
+                "impls": [
+                    {
+                        "task": "./reference/adamw_M10944_N2048_numpy_1.py",
+                        "kernel": "./kernels/adamw_M10944_N2048_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "silu": {
+        "seed": "./seeds/silu.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "M": 4096,
+                    "N": 7168
+                },
+                "impls": [
+                    {
+                        "task": "./reference/silu_M4096_N7168_numpy_0.py",
+                        "kernel": "./kernels/silu_M4096_N7168_0.py"
+                    }
+                ]
+            }
+        }
+    },
+    "mamba": {
+        "seed": "./seeds/mamba.yaml",
+        "cases": {
+            "2": {
+                "values": {
+                    "C": 256,
+                    "M": 7168,
+                    "S": 16
+                },
+                "impls": [
+                    {
+                        "task": "./reference/mamba_M7168_C256_S16_numpy_1.py",
+                        "kernel": "./kernels/mamba_M7168_C256_S16_0.py"
+                    }
+                ]
+            }
+        }
+    }
+}

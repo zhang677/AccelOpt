@@ -1,0 +1,20 @@
+test_name: lora
+
+parameters:
+- M
+- N
+- K
+- R
+
+input: |
+  x = np.random.normal(loc=0, scale=1.0, size=(M, K)).astype(np.float32)
+  w = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  a = np.random.normal(loc=0, scale=1.0, size=(K, R)).astype(np.float32)
+  b = np.random.normal(loc=0, scale=1.0, size=(R, N)).astype(np.float32)
+  return [x, w, a, b]
+
+impl: |
+  def forward(x, w, a, b):
+    y1 = np.matmul(x, w)
+    y2 = np.matmul(np.matmul(x, a), b)
+    return y1 + y2

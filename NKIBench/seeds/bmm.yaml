@@ -1,0 +1,16 @@
+test_name: bmm
+
+parameters:
+- B
+- M
+- K
+- N
+
+input: |
+  lhs = np.random.normal(loc=0, scale=1.0, size=(B, M, K)).astype(np.float32)
+  rhs = np.random.normal(loc=0, scale=1.0, size=(B, K, N)).astype(np.float32)
+  return [lhs, rhs]
+
+impl: |
+  def forward(lhs, rhs):
+    return np.matmul(lhs, rhs)

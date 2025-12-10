@@ -1,0 +1,25 @@
+test_name: add_rmsnorm_matmul
+
+parameters:
+- M
+- N
+- K
+
+input: |
+  x = np.random.normal(loc=0, scale=1.0, size=(M, K)).astype(np.float32)
+  w = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  eps = 1e-5
+  z = np.random.normal(loc=0, scale=1.0, size=(M, K)).astype(np.float32)
+  g = np.random.normal(loc=0, scale=1.0, size=(K,)).astype(np.float32)
+  return [x, w, eps, z, g]
+
+impl: |
+  def forward(x, w, eps, z, g):
+    y = x + z
+    t = np.square(y)
+    t = np.divide(t, y.shape[-1])
+    t = np.sum(t, axis=-1, keepdims=True)
+    t = (t + eps).astype(y.dtype)
+    y = y / np.sqrt(t)
+    y = y * g
+    return np.matmul(y, w)

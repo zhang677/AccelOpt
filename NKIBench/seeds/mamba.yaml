@@ -1,0 +1,25 @@
+test_name: mamba
+
+parameters:
+- M
+- C
+- S
+
+input: |
+    delta = np.random.normal(loc=0, scale=0.05, size=(C, M)).astype(np.float32)
+    u = np.random.normal(loc=0, scale=0.05, size=(C, M)).astype(np.float32)
+    a = np.random.normal(loc=0, scale=0.05, size=(C, S)).astype(np.float32)
+    b = np.random.normal(loc=0, scale=0.05, size=(S, M)).astype(np.float32)
+    c = np.random.normal(loc=0, scale=0.05, size=(S, M)).astype(np.float32)
+    return [delta, u, a, b, c]
+    
+impl: |
+  def forward(delta, u, a, b, c):
+    deltaA = np.exp(delta[:, None, :] * a[:, :, None])
+    deltaB_u = delta[:, None, :] * b[None, :, :] * u[:, None, :]
+    scan_res = np.ndarray((C, S, M), dtype=np.float32)
+    for i in range(M):
+        prev_state = scan_res[..., i - 1] if i > 0 else 0
+        scan_res[..., i] = deltaA[..., i] * prev_state + deltaB_u[..., i]
+    out = np.sum(c[None, :, :] * scan_res, axis=-2)
+    return out

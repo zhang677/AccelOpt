@@ -1,0 +1,20 @@
+test_name: swiglu
+
+parameters:
+- M
+- N
+- K
+
+input: |
+  x = np.random.normal(loc=0, scale=1.0, size=(M, K)).astype(np.float32)
+  w_up = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  w_down = np.random.normal(loc=0, scale=1.0, size=(N, K)).astype(np.float32)
+  w_gate = np.random.normal(loc=0, scale=1.0, size=(K, N)).astype(np.float32)
+  return [x, w_up, w_down, w_gate]
+
+impl: |
+  def forward(x, w_up, w_down, w_gate):
+    up_feature = np.matmul(x, w_up)
+    gate_feature = np.matmul(x, w_gate)
+    activated_gate_feature = gate_feature / (1 + np.exp(-gate_feature))
+    return np.matmul(activated_gate_feature * up_feature, w_down)

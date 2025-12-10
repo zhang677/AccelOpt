@@ -1,0 +1,13 @@
+test_name: silu
+
+parameters:
+- M
+- N
+
+input: |
+  x = np.random.normal(loc=0, scale=1.0, size=(M, N)).astype(np.float32)
+  return [x]
+
+impl: |
+  def forward(x):
+    return x / (1 + np.exp(-x))

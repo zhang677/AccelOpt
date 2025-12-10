@@ -1,0 +1,24 @@
+test_name: adamw
+
+parameters:
+- M
+- N
+
+input: |
+  theta = np.random.normal(loc=0, scale=1.0, size=(M, N)).astype(np.float32)
+  g = np.random.normal(loc=0, scale=1.0, size=(M, N)).astype(np.float32)
+  m = np.random.normal(loc=0, scale=1.0, size=(M, N)).astype(np.float32)
+  v = np.abs(np.random.normal(loc=0, scale=1.0, size=(M, N))).astype(np.float32)
+  return [theta, g, m, v]
+
+impl: |
+  def forward(theta, g, m, v):
+    theta_t = theta - 1e-5 * theta
+    m_t = 0.9 * m + 0.1 * g
+    v_t = 0.999 * v + 0.001 * g * g
+    v_hat = v_t * 1000
+    new_theta_t = theta_t - 0.01 * m_t / (np.sqrt(v_hat) + 1e-8)
+    return new_theta_t
+
+comments: |
+  AdamW update at t=1, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.01
