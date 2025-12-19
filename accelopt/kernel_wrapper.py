@@ -48,6 +48,7 @@ class KernelProperties(BaseModel):
     """
     compiled: bool = False
     correct: bool = False
+    runnable: bool = False
     metadata: dict = Field(default_factory=dict)
 
 class NKIKernel:
@@ -95,6 +96,7 @@ class NKIKernel:
                     additional_compile_opt="--disable-dge --logical-nc-config=1"
                 )(*nki_inputs)
                 self.res.compiled = True
+                self.res.runnable = True
                     
             except Exception as e:
                 print(f"Compilation failure. Error: {e}")

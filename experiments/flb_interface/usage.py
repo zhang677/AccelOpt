@@ -1,5 +1,8 @@
 # AccelOpt: service_name,task,kernel,problem,values,case_name
-from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig
+from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig, EvaluationStatus
+from flashinfer_bench.data import save_json_file, load_json_file
+from pathlib import Path
+from pydantic import BaseModel, Field
 import json
 # Profile a solution https://github.com/flashinfer-ai/flashinfer-bench/blob/main/examples/kernel_generator/kernel_generator.py#L445
 # Does FlashInfer-Bench prefer string or file path?
@@ -9,17 +12,25 @@ import json
 # code of solution
 # Path to workload
 
-class FlashInferKernel:
-    def __init__(self, traceset_path: str, author: str, language: str, target_gpu: str):
-        self.traceset = TraceSet.from_path(traceset_path)
-        self.author = author
-        self.language = self._get_supported_language(language)
-        self.target_gpu = target_gpu
+class KernelProperties(BaseModel):
+    """
+    Single Kernel Execution
+    """
+    compiled: bool = False
+    correct: bool = False
+    runnable: bool = False
+    metadata: dict = Field(default_factory=dict)
 
-    def profile(self, code, definition_path: str, workload_path: str, solution_metadata) -> Evaluation:
-        definition = Definition.model_validate_json(open(definition_path, "r").read())
-        solution = self._create_solution_from_code(code, definition, solution_metadata)
-        selected_workload = Trace.model_validate_json(open(workload_path, "r").read())
+class FlashInferKernel:
+    def __init__(self, traceset_path: str, definition_path: str):
+        self.traceset = TraceSet.from_path(traceset_path)
+        self.definition = load_json_file(Definition, definition_path)
+        self.res = KernelProperties()
+
+    def profile(self, solution_path, workload_path: str, **kwargs) -> Evaluation:
+        definition = self.definition
+        solution = load_json_file(Solution, solution_path)
+        selected_workload = load_json_file(Trace, workload_path)
         temp_traceset = TraceSet(
             root=self.traceset.root,
             definitions={definition.name: definition},
@@ -27,14 +38,54 @@ class FlashInferKernel:
             workloads={definition.name: [selected_workload]},
             traces={definition.name: []},
         )
-        benchmark = Benchmark(temp_traceset, BenchmarkConfig())
+        cfg = BenchmarkConfig()
+        cfg.profile_baseline = False
+        cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
+        benchmark = Benchmark(temp_traceset, cfg)
         result_traceset = benchmark.run_all()
 
         traces = result_traceset.traces.get(definition.name, [])
 
         trace_map = {trace.solution: trace for trace in traces}
-        evaluation = trace_map.get(solution.name)
-        return evaluation
+        evaluation = trace_map.get(solution.name).evaluation
+        if evaluation.status == EvaluationStatus.PASSED:
+            self.res.compiled = True
+            self.res.runnable = True
+            self.res.correct = True
+            self.res.metadata = {"latency": evaluation.performance.latency_ms}
+        elif evaluation.status in [EvaluationStatus.INCORRECT_SHAPE, EvaluationStatus.INCORRECT_NUMERICAL, EvaluationStatus.INCORRECT_DTYPE]:
+            self.res.compiled = True
+            self.res.runnable = True
+            self.res.correct = False
+            self.res.metadata = {"correctness_error": evaluation.log}
+        elif evaluation.status == EvaluationStatus.RUNTIME_ERROR:
+            self.res.compiled = True
+            self.res.runnable = False
+            self.res.correct = False
+            self.res.metadata = {"runtime_error": evaluation.log}
+        elif evaluation.status in [EvaluationStatus.COMPILATION_ERROR, EvaluationStatus.TIMEOUT]:
+            self.res.compiled = False
+            self.res.runnable = False
+            self.res.correct = False
+            self.res.metadata = {"compilation_error": evaluation.log}
+        else:
+            raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
+        return self.res
+
+    def save_solution(self, code, **kwargs) -> Path:
+        definition = self.definition
+        solutions_dir = (
+            self.traceset.root / "solutions" / definition.op_type / definition.name
+        )
+        solutions_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create filename using solution name
+        solution = self._create_solution_from_code(code, definition, **kwargs)
+        solution_filename = f"{solution.name}.json"
+        solution_path = solutions_dir / solution_filename
+
+        save_json_file(solution, solution_path)
+        return solution_path
 
     def _get_supported_language(self, language: str) -> SupportedLanguages:
         language_map = {
@@ -46,12 +97,13 @@ class FlashInferKernel:
             raise ValueError(f"Unsupported language: {language}")
 
     def _create_solution_from_code(
-        self, code, definition: Definition, solution_metadata: dict
+        self, code, definition: Definition, **kwargs
     ) -> Solution:
-        solution_name = solution_metadata["name"]
-        solution_description = solution_metadata["description"]
+        solution_name = kwargs.get("name", "default_solution")
+        solution_description = kwargs.get("description", "default_description")
+        language = self._get_supported_language(kwargs.get("language", "triton"))
 
-        if self.language == SupportedLanguages.CUDA and isinstance(code, dict):
+        if language == SupportedLanguages.CUDA and isinstance(code, dict):
             sources = []
             for filename, content in code.items():
                 sources.append(SourceFile(path=filename, content=content))
@@ -67,10 +119,10 @@ class FlashInferKernel:
         solution = Solution(
             name=solution_name,
             definition=definition.name,
-            author=self.author,
+            author=kwargs.get("author", "AccelOpt"),
             spec=BuildSpec(
-                language=self.language,
-                target_hardware=[self.target_gpu],
+                language=language,
+                target_hardware=[kwargs.get("target_gpu", "H100")],
                 entry_point=entry_point,
             ),
             sources=sources,
@@ -81,6 +133,8 @@ class FlashInferKernel:
 
 if __name__ == "__main__":
     # Check all definitions
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     traceset_path = "/home/ubuntu/flashinfer-trace"
     print(f"Loading TraceSet from: {traceset_path}")
     traceset = TraceSet.from_path(traceset_path)
@@ -111,15 +165,39 @@ if __name__ == "__main__":
     task_code = single_definition.reference # task code
     print(task_code)
 
-    kernel = FlashInferKernel(traceset_path, "AccelOpt", "triton", "H100")
-    evaluation = kernel.profile(
-        kernel_code, 
-        "/home/ubuntu/flashinfer-trace/definitions/gemm/gemm_n128_k2048.json",
-        "/home/ubuntu/AccelOpt/experiments/flb_interface/example_workload.jsonl",
-        {
-            "name": f"{case_name}_optimized",
-            "description": f"Optimized kernel for {case_name}"
-        }
+    checkpoint_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
+    
+    # Profile baseline kernel
+    definition_path = "/home/ubuntu/flashinfer-trace/definitions/gemm/gemm_n128_k2048.json"
+    baseline_path = "/home/ubuntu/flashinfer-trace/solutions/gemm/gemm_n128_k2048/claude-opus-4-1-20250805_triton_a20c42.json"
+    baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
+    baseline_res = baseline_kernel.profile(
+        baseline_path,
+        workload_path="/home/ubuntu/AccelOpt/experiments/flb_interface/example_workload.jsonl",
+        timeout_seconds=300,
     )
-    print(evaluation)
+    print(baseline_res)
+    
+    
+    # Register a solution to FlashInfer-Trace
+    mock_kernel_path = "/home/ubuntu/flashinfer-trace/solutions/gemm/gemm_n128_k2048/gemini-2.5-pro_triton_kmw3sz.json"
+    mock_solution = load_json_file(Solution, mock_kernel_path)
+    kernel_code = mock_solution.sources[0].content
+    kernel = FlashInferKernel(checkpoint_path, definition_path)
+    solution_path = kernel.save_solution(
+        kernel_code,
+        author="AccelOpt",
+        language="triton",
+        target_gpu="H100",
+        name=f"{case_name}_optimized",
+        description=f"Optimized kernel for {case_name}"
+    )
+    res = kernel.profile(
+        solution_path, 
+        workload_path="/home/ubuntu/AccelOpt/experiments/flb_interface/example_workload.jsonl",
+        timeout_seconds=300,
+    )
+    print(res)
+
+    print(f"Solution saved to: {solution_path}")
 
