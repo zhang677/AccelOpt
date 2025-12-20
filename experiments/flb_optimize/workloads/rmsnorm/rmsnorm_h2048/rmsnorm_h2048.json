@@ -1,0 +1,14 @@
+{
+  "axes": {
+    "batch_size": 16254
+  },
+  "inputs": {
+    "hidden_states": {
+      "type": "random"
+    },
+    "weight": {
+      "type": "random"
+    }
+  },
+  "uuid": "932f75f9-e29a-4502-8794-68347b591fd5"
+}

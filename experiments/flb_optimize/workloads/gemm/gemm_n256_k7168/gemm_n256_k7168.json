@@ -1,0 +1,14 @@
+{
+  "axes": {
+    "M": 901
+  },
+  "inputs": {
+    "A": {
+      "type": "random"
+    },
+    "B": {
+      "type": "random"
+    }
+  },
+  "uuid": "d09b28b7-50a8-4382-a383-7aaf36de1087"
+}

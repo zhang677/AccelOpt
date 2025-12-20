@@ -25,9 +25,9 @@ class FlashInferKernel:
     def __init__(self, traceset_path: str, definition_path: str):
         self.traceset = TraceSet.from_path(traceset_path)
         self.definition = load_json_file(Definition, definition_path)
-        self.res = KernelProperties()
 
     def profile(self, solution_path, workload_path: str, **kwargs) -> Evaluation:
+        res = KernelProperties()
         definition = self.definition
         solution = load_json_file(Solution, solution_path)
         selected_workload = load_json_file(Trace, workload_path)
@@ -35,7 +35,7 @@ class FlashInferKernel:
             root=self.traceset.root,
             definitions={definition.name: definition},
             solutions={definition.name: [solution]},
-            workloads={definition.name: [selected_workload]},
+            workloads={definition.name: [selected_workload, selected_workload]},
             traces={definition.name: []},
         )
         cfg = BenchmarkConfig()
@@ -49,28 +49,28 @@ class FlashInferKernel:
         trace_map = {trace.solution: trace for trace in traces}
         evaluation = trace_map.get(solution.name).evaluation
         if evaluation.status == EvaluationStatus.PASSED:
-            self.res.compiled = True
-            self.res.runnable = True
-            self.res.correct = True
-            self.res.metadata = {"latency": evaluation.performance.latency_ms}
+            res.compiled = True
+            res.runnable = True
+            res.correct = True
+            res.metadata = {"latency": evaluation.performance.latency_ms}
         elif evaluation.status in [EvaluationStatus.INCORRECT_SHAPE, EvaluationStatus.INCORRECT_NUMERICAL, EvaluationStatus.INCORRECT_DTYPE]:
-            self.res.compiled = True
-            self.res.runnable = True
-            self.res.correct = False
-            self.res.metadata = {"correctness_error": evaluation.log}
+            res.compiled = True
+            res.runnable = True
+            res.correct = False
+            res.metadata = {"correctness_error": evaluation.log}
         elif evaluation.status == EvaluationStatus.RUNTIME_ERROR:
-            self.res.compiled = True
-            self.res.runnable = False
-            self.res.correct = False
-            self.res.metadata = {"runtime_error": evaluation.log}
+            res.compiled = True
+            res.runnable = False
+            res.correct = False
+            res.metadata = {"runtime_error": evaluation.log}
         elif evaluation.status in [EvaluationStatus.COMPILATION_ERROR, EvaluationStatus.TIMEOUT]:
-            self.res.compiled = False
-            self.res.runnable = False
-            self.res.correct = False
-            self.res.metadata = {"compilation_error": evaluation.log}
+            res.compiled = False
+            res.runnable = False
+            res.correct = False
+            res.metadata = {"compilation_error": evaluation.log}
         else:
             raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
-        return self.res
+        return res
 
     def save_solution(self, code, **kwargs) -> Path:
         definition = self.definition
@@ -169,11 +169,13 @@ if __name__ == "__main__":
     
     # Profile baseline kernel
     definition_path = "/home/ubuntu/flashinfer-trace/definitions/gemm/gemm_n128_k2048.json"
+    # workload_path = "/home/ubuntu/flashinfer-trace/workloads/gemm/gemm_n128_k2048.jsonl"
+    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/example_workload.jsonl"
     baseline_path = "/home/ubuntu/flashinfer-trace/solutions/gemm/gemm_n128_k2048/claude-opus-4-1-20250805_triton_a20c42.json"
     baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
     baseline_res = baseline_kernel.profile(
         baseline_path,
-        workload_path="/home/ubuntu/AccelOpt/experiments/flb_interface/example_workload.jsonl",
+        workload_path=workload_path,
         timeout_seconds=300,
     )
     print(baseline_res)
@@ -194,7 +196,7 @@ if __name__ == "__main__":
     )
     res = kernel.profile(
         solution_path, 
-        workload_path="/home/ubuntu/AccelOpt/experiments/flb_interface/example_workload.jsonl",
+        workload_path=workload_path,
         timeout_seconds=300,
     )
     print(res)

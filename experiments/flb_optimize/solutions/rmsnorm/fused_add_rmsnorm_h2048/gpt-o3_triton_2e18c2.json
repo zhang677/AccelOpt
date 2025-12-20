@@ -1,0 +1,20 @@
+{
+  "name": "gpt-o3_triton_2e18c2",
+  "definition": "fused_add_rmsnorm_h2048",
+  "author": "gpt-o3",
+  "spec": {
+    "language": "triton",
+    "target_hardware": [
+      "B200"
+    ],
+    "entry_point": "main.py::run",
+    "dependencies": []
+  },
+  "sources": [
+    {
+      "path": "main.py",
+      "content": "import torch\nimport triton\nimport triton.language as tl\n\n\n@triton.jit\ndef _fused_add_rmsnorm_kernel(\n    hidden_ptr,      # *bf16 [batch_size, 2048]\n    residual_ptr,    # *bf16 [batch_size, 2048]\n    weight_ptr,      # *bf16 [2048]\n    output_ptr,      # *bf16 [batch_size, 2048]\n    batch_size,      # int\n    eps,             # float32\n    BLOCK_SIZE: tl.constexpr,  # 2048\n):\n    row = tl.program_id(0)\n    if row >= batch_size:\n        return\n\n    offs = tl.arange(0, BLOCK_SIZE)\n\n    hidden_ptrs   = hidden_ptr   + row * BLOCK_SIZE + offs\n    residual_ptrs = residual_ptr + row * BLOCK_SIZE + offs\n    weight_ptrs   = weight_ptr   + offs\n    out_ptrs      = output_ptr   + row * BLOCK_SIZE + offs\n\n    hidden   = tl.load(hidden_ptrs).to(tl.float32)\n    residual = tl.load(residual_ptrs).to(tl.float32)\n    weight   = tl.load(weight_ptrs).to(tl.float32)\n\n    x   = hidden + residual\n    sq  = x * x\n    ssq = tl.sum(sq, axis=0)\n    inv_rms = tl.math.rsqrt(ssq / BLOCK_SIZE + eps)\n\n    y = x * inv_rms * weight\n    y = y.to(tl.bfloat16)\n\n    tl.store(out_ptrs, y)\n\n\ndef run(hidden_states, residual, weight, eps=1e-6):\n    # Basic validation\n    if hidden_states.ndim != 2 or residual.ndim != 2:\n        raise ValueError(\"hidden_states and residual must be 2-D tensors\")\n    if hidden_states.shape != residual.shape:\n        raise ValueError(\"hidden_states and residual must have identical shapes\")\n    if hidden_states.shape[1] != 2048 or weight.numel() != 2048:\n        raise ValueError(\"hidden_size must be 2048 for all tensors\")\n    if hidden_states.dtype != torch.bfloat16 or residual.dtype != torch.bfloat16 or weight.dtype != torch.bfloat16:\n        raise ValueError(\"All tensors must be of dtype torch.bfloat16\")\n    if hidden_states.device != residual.device or hidden_states.device.type != weight.device.type:\n        raise ValueError(\"All input tensors must reside on the same device\")\n\n    batch_size = hidden_states.shape[0]\n    src_device = hidden_states.device\n\n    # Ensure data is on CUDA\n    if src_device.type != \"cuda\":\n        if not torch.cuda.is_available():\n            raise RuntimeError(\"CUDA is not available but is required for Triton kernels\")\n        device = torch.device(\"cuda\")\n        hidden_cuda   = hidden_states.to(device)\n        residual_cuda = residual.to(device)\n        weight_cuda   = weight.to(device)\n    else:\n        device = src_device\n        hidden_cuda   = hidden_states.contiguous()\n        residual_cuda = residual.contiguous()\n        weight_cuda   = weight.contiguous()\n\n    output_cuda = torch.empty_like(hidden_cuda)\n\n    grid = (batch_size,)\n    _fused_add_rmsnorm_kernel[grid](\n        hidden_cuda,\n        residual_cuda,\n        weight_cuda,\n        output_cuda,\n        batch_size,\n        eps,\n        BLOCK_SIZE=2048,\n        num_warps=8,\n        num_stages=4,\n    )\n\n    return output_cuda if src_device.type == \"cuda\" else output_cuda.to(src_device)"
+    }
+  ],
+  "description": "o3 optimized kernel for fused_add_rmsnorm_h2048 (round 1, reasoning effort: high)"
+}

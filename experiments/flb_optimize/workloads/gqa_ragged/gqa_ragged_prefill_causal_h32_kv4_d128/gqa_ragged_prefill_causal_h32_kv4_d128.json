@@ -1,0 +1,33 @@
+{
+  "axes": {
+    "len_indptr": 16,
+    "total_q": 969,
+    "total_kv": 969
+  },
+  "inputs": {
+    "q": {
+      "type": "random"
+    },
+    "k": {
+      "type": "random"
+    },
+    "v": {
+      "type": "random"
+    },
+    "qo_indptr": {
+      "type": "safetensors",
+      "path": "./blob/workloads/gqa_ragged/gqa_ragged_prefill_causal_h32_kv4_d128/gqa_ragged_prefill_causal_h32_kv4_d128_1fc89da688be43adb6f4d5cf65dca1f0.safetensors",
+      "tensor_key": "qo_indptr"
+    },
+    "kv_indptr": {
+      "type": "safetensors",
+      "path": "./blob/workloads/gqa_ragged/gqa_ragged_prefill_causal_h32_kv4_d128/gqa_ragged_prefill_causal_h32_kv4_d128_1fc89da688be43adb6f4d5cf65dca1f0.safetensors",
+      "tensor_key": "kv_indptr"
+    },
+    "sm_scale": {
+      "type": "scalar",
+      "value": 0.08838834764831843
+    }
+  },
+  "uuid": "b3445888-8668-4721-9359-9da119ab9f34"
+}

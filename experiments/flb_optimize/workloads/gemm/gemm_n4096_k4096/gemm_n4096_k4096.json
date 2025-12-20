@@ -1,0 +1,14 @@
+{
+  "axes": {
+    "M": 40
+  },
+  "inputs": {
+    "A": {
+      "type": "random"
+    },
+    "B": {
+      "type": "random"
+    }
+  },
+  "uuid": "54062a8b-a9ca-47d8-b5ef-7f6f0325ef39"
+}

@@ -1,0 +1,34 @@
+{
+  "axes": {
+    "batch_size": 1,
+    "num_pages": 486,
+    "len_indptr": 2,
+    "num_kv_indices": 436
+  },
+  "inputs": {
+    "q": {
+      "type": "random"
+    },
+    "k_cache": {
+      "type": "random"
+    },
+    "v_cache": {
+      "type": "random"
+    },
+    "kv_indptr": {
+      "type": "safetensors",
+      "path": "./blob/workloads/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/gqa_paged_decode_h32_kv4_d128_ps1_5806af8568fd4f32ab5ae26566d08fda.safetensors",
+      "tensor_key": "kv_indptr"
+    },
+    "kv_indices": {
+      "type": "safetensors",
+      "path": "./blob/workloads/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/gqa_paged_decode_h32_kv4_d128_ps1_5806af8568fd4f32ab5ae26566d08fda.safetensors",
+      "tensor_key": "kv_indices"
+    },
+    "sm_scale": {
+      "type": "scalar",
+      "value": 0.08838834764831843
+    }
+  },
+  "uuid": "23e02562-75ca-474a-a527-078df0c18fab"
+}
