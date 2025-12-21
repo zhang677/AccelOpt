@@ -1,0 +1,44 @@
+{
+  "definition": "gqa_paged_prefill_causal_h32_kv8_d128_ps1",
+  "workload": {
+    "axes": {
+      "len_indptr": 2,
+      "total_q": 1,
+      "num_kv_indices": 34,
+      "num_pages": 51
+    },
+    "inputs": {
+      "q": {
+        "type": "random"
+      },
+      "k_cache": {
+        "type": "random"
+      },
+      "v_cache": {
+        "type": "random"
+      },
+      "qo_indptr": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_paged/gqa_paged_prefill_causal_h32_kv8_d128_ps1/gqa_paged_prefill_causal_h32_kv8_d128_ps1_0e07dac7493e463ba5e65958427b4c4c.safetensors",
+        "tensor_key": "qo_indptr"
+      },
+      "kv_indptr": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_paged/gqa_paged_prefill_causal_h32_kv8_d128_ps1/gqa_paged_prefill_causal_h32_kv8_d128_ps1_0e07dac7493e463ba5e65958427b4c4c.safetensors",
+        "tensor_key": "kv_indptr"
+      },
+      "kv_indices": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_paged/gqa_paged_prefill_causal_h32_kv8_d128_ps1/gqa_paged_prefill_causal_h32_kv8_d128_ps1_0e07dac7493e463ba5e65958427b4c4c.safetensors",
+        "tensor_key": "kv_indices"
+      },
+      "sm_scale": {
+        "type": "scalar",
+        "value": 0.08838834764831843
+      }
+    },
+    "uuid": "25f2945c-c282-47a9-ac12-bbc702a218f4"
+  },
+  "solution": null,
+  "evaluation": null
+}

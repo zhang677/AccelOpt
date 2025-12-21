@@ -21,7 +21,7 @@ class UserPromptConfig(BaseModel):
     breadth: int = 0
 
 class PlannerResponse(BaseModel):
-    last_solution_path: str
+    candidate_solution_path: str
     reasonings: List[str]
     plans: List[str]
 
@@ -67,7 +67,7 @@ async def single_query(single_record, agent, user_prompt_config: UserPromptConfi
     config_copy.definition_path = single_record["definition_path"]
     config_copy.solution_path =single_record["solution_path"]
     user_prompt = construct_user_prompt(config_copy)
-    logfire_service_name = load_json_file(Solution, single_record["last_solution_path"]).name
+    logfire_service_name = load_json_file(Solution, single_record["solution_path"]).name
     logfire.configure(service_name=logfire_service_name)
     logfire.instrument_openai()
     with logfire.span(logfire_service_name) as span:
@@ -97,7 +97,7 @@ async def single_query(single_record, agent, user_prompt_config: UserPromptConfi
                 reasonings.append(reasoning)
                 plans.append(plan)
         return PlannerResponse(
-            last_solution_path=single_record["last_solution_path"],
+            candidate_solution_path=single_record["solution_path"],
             reasonings=reasonings,
             plans=plans
         )

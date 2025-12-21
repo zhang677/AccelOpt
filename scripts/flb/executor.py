@@ -14,9 +14,9 @@ import pandas as pd
 from pydantic import BaseModel
 import logfire
 from accelopt.utils import extract_first_code, retry_runner_safer
-from accelopt.kernel_wrapper import FlashInferKernel
-from flashinfer_bench import Solution
-from flashinfer_bench.data import load_json_file
+from accelopt.flb_wrapper import FlashInferKernel, format_definition
+from flashinfer_bench import Solution, Definition, Trace
+from flashinfer_bench.data import load_json_file, save_json_file
 from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel, set_tracing_disabled, RunConfig, ModelSettings
 
 # -------------------------- Logging --------------------------
@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 
 # -------------------------- Config Models --------------------------
 class ExecutorPromptConfig(BaseModel):
-    host_numpy_path: str = ""
-    nki_kernel_path: str = ""
+    definition_path: str = ""
+    workload_path: str = ""
+    candidate_solution_path: str = ""
     user_template_path: str = ""
     optimization_plan: str = ""
     save_fields: list[str] = []
@@ -34,46 +35,28 @@ class ExecutorPromptConfig(BaseModel):
 class ExecutorConfig(BaseModel):
     system_prompt: str = ""
     service_name: str = ""
-    kernel_path: str = ""
-    task_path: str = ""
+    definition_path: str = ""
+    workload_path: str = ""
+    candidate_solution_path: str = ""
+    candidate_trace_path: str = ""
     optimization_plan: str = ""
-    problem: str = ""
-    values: str = ""
-    case_name: str = ""
     num_samples: int = 4
     user_template_path: str = ""
     save_fields: list[str] = []
-    rel_tol: float = 2e-5
+    traceset_root: str = ""
 # -------------------------- Helpers --------------------------
 def construct_executor_prompt(config: ExecutorPromptConfig) -> str:
-    with open(config.host_numpy_path, "r") as f:
-        host_numpy_function = f.read()
-    with open(config.nki_kernel_path, "r") as f:
-        nki_kernel_function = f.read()
+    definition = load_json_file(Definition, config.definition_path)
+    solution = load_json_file(Solution, config.candidate_solution_path)
     with open(config.user_template_path, "r") as f:
         prompt_template = f.read()
     user_prompt = (
         prompt_template
-        .replace("{problem_code}", host_numpy_function)
-        .replace("{kernel_code}", nki_kernel_function)
+        .replace("{problem_code}", format_definition(definition))
+        .replace("{kernel_code}", solution.sources[0].content)
         .replace("{optimization_plan}", config.optimization_plan)
     )
     return user_prompt
-
-def _write_temp_kernel(code: str) -> str:
-    fd, temp_path = tempfile.mkstemp(suffix=".py")
-    with os.fdopen(fd, "w") as f:
-        f.write(
-            "import numpy as np\n"
-            "import neuronxcc.nki as nki\n"
-            "import neuronxcc.nki.language as nl\n"
-            "import neuronxcc.nki.typing as nt\n"
-            "import neuronxcc.nki.isa as nisa\n"
-            "from neuronxcc.nki import trace\n"
-            "from neuronxcc.nki.language import par_dim\n\n"
-            f"{code}\n"
-        )
-    return temp_path
 
 # -------------------------- Parallel LLM --------------------------
 async def propose_once(name: str, config: ExecutorPromptConfig, agent: Agent):
@@ -120,86 +103,65 @@ async def stage1_gather_proposals(service_name: str, pconfig: ExecutorPromptConf
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return [r for r in results if isinstance(r, dict)]
 
-def _profile_worker(program_path: str, base_numpy_path: str, save_fields: list[str], result_path: str, rel_tol: float):
-    try:
-        k = NKIKernel(program_path, base_numpy_path)
-        k.rel_tol = rel_tol
-        k.profile(save_fields)
-        out = {"compiled": k.res.compiled, "runnable": k.res.runnable, "correct": k.res.correct, "metadata": k.res.metadata or {}}
-    except Exception as e:
-        out = {"compiled": False, "runnable": False, "correct": False,
-               "metadata": {"compilation_error": str(e), "compilation_traceback": traceback.format_exc()}}
-    with open(result_path, "w") as f:
-        json.dump(out, f)
-
-def profile_with_hard_timeout_sync(program_path: str, base_numpy_path: str, save_fields: list[str], rel_tol: float, timeout_sec: int) -> dict:
-    fd, result_path = tempfile.mkstemp(prefix="host_nki_profile_", suffix=".json"); os.close(fd)
-    p = mp.Process(target=_profile_worker, args=(program_path, base_numpy_path, save_fields, result_path, rel_tol), daemon=True)
-    p.start(); p.join(timeout_sec)
-    try:
-        if p.is_alive():
-            p.terminate(); p.join(5)
-            return {"compiled": False, "runnable": False, "correct": False,
-                    "metadata": {"compilation_error": f"Hard timeout after {timeout_sec}s"}} 
-        with open(result_path) as f:
-            return json.load(f)
-    except Exception:
-        return {"compiled": False, "runnable": False, "correct": False,
-                "metadata": {"compilation_error": traceback.format_exc()}}
-    finally:
-        with contextlib.suppress(Exception): os.remove(result_path)
-
 # ---------- Stage 2: sequential profiling with result collection ----------
 def stage2_profile_and_collect(
     proposals: list[dict],
-    baseline_kernel: NKIKernel,
     case_config: ExecutorConfig,
     base_spec: dict,
     per_profile_timeout: int = 900
 ):
     results = []
-    for prop in proposals:
+    for prop_id, prop in enumerate(proposals):
         name, result, code = prop["name"], prop["result"], prop["code"]
 
         spec = {
-            "problem": base_spec["problem"],
-            "values": base_spec["values"],
-            "case_name": base_spec["case_name"],
-            "spec_code": base_spec["spec_code"],
-            "baseline_code": base_spec["baseline_code"],
             "plan": case_config.optimization_plan,
             "new_kernel_code": code,
-            "baseline_latency": baseline_kernel.res.metadata.get("latency"),
-            "baseline_metadata": json.dumps(baseline_kernel.res.metadata or {}),
         }
 
-        temp_path = None
         try:
             start = time.monotonic()
             print(f"[Stage2] START name={name} case={base_spec['case_name']} timeout={per_profile_timeout}s")
-            temp_path = _write_temp_kernel(code)
-            kp = profile_with_hard_timeout_sync(
-                program_path=temp_path,
-                base_numpy_path=baseline_kernel.base_numpy_path,
-                save_fields=case_config.save_fields,
-                rel_tol=case_config.rel_tol,
-                timeout_sec=per_profile_timeout,
+            kernel = FlashInferKernel(
+                traceset_root=case_config.traceset_root,
+                definition_path=case_config.definition_path
             )
             
+            new_solution_path = kernel.create_and_save_solution(
+                code=code,
+                author="AccelOpt",
+                language="triton",
+                target_gpu="H100",
+                name=f"{case_config.service_name}_{prop_id}",
+                description=""
+            )
+            profile_trace, kp = kernel.profile(
+                solution_path=new_solution_path,
+                workload_path=case_config.workload_path,
+                timeout_seconds=per_profile_timeout,
+                profile_baseline=False,
+                use_isolated_runner=True
+            )
+            profile_trace_path = os.path.join(
+                case_config.traceset_root,
+                "traces",
+                kernel.definition.op_type,
+                os.path.basename(new_solution_path)
+            )
+            save_json_file(profile_trace, profile_trace_path)
             record_result = {
-                "body": code,
-                "spec_code": spec["spec_code"],
-                "baseline": spec["baseline_code"],
-                "baseline_latency": spec["baseline_latency"],
-                "problem": spec["problem"],
-                "values": spec["values"],
-                "kernel_metadata": json.dumps(kp.get("metadata", {})),
-                "baseline_metadata": spec["baseline_metadata"],
+                "definition_path": case_config.definition_path,
+                "workload_path": case_config.workload_path,
+                "candidate_solution_path": case_config.candidate_solution_path,
+                "candidate_trace_path": case_config.candidate_trace_path,
+                "solution_path": new_solution_path,
+                "trace_path": profile_trace_path,
             }
 
             # Check if there were errors
-            if not kp.get("compiled", False) or not kp.get("runnable", False) or not kp.get("correct", False):
-                metadata = kp.get("metadata", {})
+            # if not kp.get("compiled", False) or not kp.get("runnable", False) or not kp.get("correct", False):
+            if not kp.compiled or not kp.runnable or not kp.correct:
+                metadata = kp.metadata
                 error_msg = (metadata.get("compilation_error") or 
                            metadata.get("correctness_error") or 
                            metadata.get("run_error") or 
@@ -207,10 +169,10 @@ def stage2_profile_and_collect(
                 record_result["error"] = error_msg
             else:
                 # Success case - add latency and speedup
-                metadata = kp.get("metadata", {})
+                metadata = kp.metadata
                 record_result["latency"] = metadata.get("latency")
                 
-                bl = baseline_kernel.res.metadata.get("latency")
+                bl = load_json_file(Trace, case_config.candidate_trace_path).evaluation.performance.latency_ms
                 cl = metadata.get("latency")
                 if bl and cl:
                     record_result["speedup"] = bl / cl
@@ -226,31 +188,27 @@ def stage2_profile_and_collect(
             logger.error(f"[Profile Error] {name}: {e}")
             error_result = {
                 "error": str(e),
-                "body": code,
-                "spec_code": spec["spec_code"],
-                "baseline": spec["baseline_code"],
-                "baseline_latency": spec["baseline_latency"],
-                "problem": spec["problem"],
-                "values": spec["values"]
+                "definition_path": case_config.definition_path,
+                "workload_path": case_config.workload_path,
+                "candidate_solution_path": case_config.candidate_solution_path,
+                "candidate_trace_path": case_config.candidate_trace_path,
+                "solution_path": new_solution_path,
+                "trace_path": profile_trace_path,
             }
             results.append(error_result)
-        finally:
-            if temp_path:
-                with contextlib.suppress(Exception):
-                    os.remove(temp_path)
     
     return results
 
 # ---------- main(): orchestrates proposal generation and profiling ----------
 async def process_single_service_plan(
     case_config: ExecutorConfig, 
-    baseline_kernel: NKIKernel, 
     model: OpenAIChatCompletionsModel,
     base_spec: dict
 ):
     pconfig = ExecutorPromptConfig(
-        host_numpy_path=case_config.task_path,
-        nki_kernel_path=case_config.kernel_path,
+        definition_path=case_config.definition_path,
+        workload_path=case_config.workload_path,
+        candidate_solution_path=case_config.candidate_solution_path,
         user_template_path=case_config.user_template_path,
         optimization_plan=case_config.optimization_plan,
         save_fields=case_config.save_fields,
@@ -261,7 +219,7 @@ async def process_single_service_plan(
     proposals = await stage1_gather_proposals(case_config.service_name, pconfig, agent, case_config.num_samples)
     
     # 2) Sequential profiling with result collection
-    results = stage2_profile_and_collect(proposals, baseline_kernel, case_config, base_spec, per_profile_timeout=180)
+    results = stage2_profile_and_collect(proposals, case_config, base_spec, per_profile_timeout=180)
     
     return results
 
@@ -302,51 +260,39 @@ async def main(args):
 
     # iterate services
     for _, row in problems.iterrows():
-        last_solution_path = row["last_solution_path"]
-        logfire_service_name = load_json_file(Solution, last_solution_path).name
+        candidate_solution_path = row["solution_path"]
+        logfire_service_name = load_json_file(Solution, candidate_solution_path).name
         logfire.configure(service_name=logfire_service_name)
         logfire.instrument_openai()
-        plans = next(item["plans"] for item in extractor_output_list if item["last_solution_path"] == last_solution_path)
-
+        plans = next(item["plans"] for item in extractor_output_list if item["candidate_solution_path"] == candidate_solution_path)
         # profile baseline once per service (blocking)
-        baseline_kernel = FlashInferKernel(row["kernel"], row["task"])
-        baseline_kernel.rel_tol = args.rel_tol
-        baseline_kernel.res.metadata = json.loads(row["profile"])
-
-        with open(row["task"], "r") as f:
-            spec_code = f.read()
-        with open(baseline_kernel.program_path, "r") as f:
-            baseline_code = f.read()
 
         base_spec = {
-            "problem": row["problem"],
-            "values": row["values"],
-            "case_name": row["case_name"],
-            "spec_code": spec_code,
-            "baseline_code": baseline_code,
+            "definition_path": row["definition_path"],
+            "workload_path": row["workload_path"],
+            "candidate_solution_path": candidate_solution_path
         }
 
-        single_dict = {"service_name": service_name, "case_name": row["case_name"]}
-        
+        single_dict = {"candidate_solution_path": candidate_solution_path, "workload_path": row["workload_path"]}
+        logfire_service_name = load_json_file(Solution, candidate_solution_path).name
         for i in range(len(plans)):
             plan = plans[i]
             case_config = ExecutorConfig(
                 system_prompt=system_prompt,
-                service_name=f"{service_name}_plan_{i}",
-                kernel_path=row["kernel"],
-                task_path=row["task"],
+                service_name=f"{logfire_service_name}_plan_{i}",
                 optimization_plan=plan,
-                problem=row["problem"],
-                values=row["values"],
-                case_name=row["case_name"],
+                definition_path=row["definition_path"],
+                workload_path=row["workload_path"],
+                candidate_solution_path=candidate_solution_path,
+                candidate_trace_path=row["trace_path"],
                 num_samples=args.num_samples,
                 user_template_path=args.user_template_path,
                 save_fields=save_fields,
-                rel_tol=args.rel_tol,
+                traceset_root=args.traceset_root
             )
             
             plan_results = await asyncio.wait_for(
-                process_single_service_plan(case_config, baseline_kernel, model, base_spec), 
+                process_single_service_plan(case_config, model, base_spec), 
                 timeout=7200
             )
             

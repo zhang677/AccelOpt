@@ -1,0 +1,19 @@
+{
+  "definition": "gemm_n28672_k4096",
+  "workload": {
+    "axes": {
+      "M": 8192
+    },
+    "inputs": {
+      "A": {
+        "type": "random"
+      },
+      "B": {
+        "type": "random"
+      }
+    },
+    "uuid": "32cd2698-78a7-4446-9691-2b3e42fc68b7"
+  },
+  "solution": null,
+  "evaluation": null
+}

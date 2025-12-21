@@ -1,1 +1,0 @@
-{"definition":"rmsnorm_h128","workload":{"axes":{"batch_size":520128},"inputs":{"hidden_states":{"type":"random"},"weight":{"type":"random"}},"uuid":"f2872f89-5d8d-403a-9603-5918541cb9e0"},"solution":null,"evaluation":null}

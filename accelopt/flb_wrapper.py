@@ -1,7 +1,68 @@
 from .eval_numpy import KernelProperties
 from pathlib import Path
 from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig, EvaluationStatus
-from flashinfer_bench.data import save_json_file, load_json_file, load_jsonl_file
+from flashinfer_bench.data import save_json_file, load_json_file
+
+
+
+def _get_supported_language(language: str) -> SupportedLanguages:
+    language_map = {
+        "triton": SupportedLanguages.TRITON,
+    }
+    if language.lower() in language_map:
+        return language_map[language.lower()]
+    else:
+        raise ValueError(f"Unsupported language: {language}")
+
+
+def _create_solution_from_code(
+    self, code, definition: Definition, **kwargs
+) -> Solution:
+    solution_name = kwargs.get("name", "default_solution")
+    solution_description = kwargs.get("description", "default_description")
+    language = _get_supported_language(kwargs.get("language", "triton"))
+
+    if language == SupportedLanguages.CUDA and isinstance(code, dict):
+        sources = []
+        for filename, content in code.items():
+            sources.append(SourceFile(path=filename, content=content))
+
+        entry_point = "main.cpp::run"
+    else:
+        if isinstance(code, dict):
+            code = next(iter(code.values()))
+
+        sources = [SourceFile(path="main.py", content=code)]
+        entry_point = "main.py::run"
+
+    solution = Solution(
+        name=solution_name,
+        definition=definition.name,
+        author=kwargs.get("author", "AccelOpt"),
+        spec=BuildSpec(
+            language=language,
+            target_hardware=[kwargs.get("target_gpu", "H100")],
+            entry_point=entry_point,
+        ),
+        sources=sources,
+        description=solution_description,
+    )
+    return solution
+
+
+def create_and_save_solution(traceset: TraceSet, definition: Definition, code, **kwargs) -> Path:
+    solutions_dir = (
+        traceset.root / "solutions" / definition.op_type / definition.name
+    )
+    solutions_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create filename using solution name
+    solution = _create_solution_from_code(code, definition, **kwargs)
+    solution_filename = f"{solution.name}.json"
+    solution_path = solutions_dir / solution_filename
+
+    save_json_file(solution, solution_path)
+    return solution_path
 
 class FlashInferKernel:
     def __init__(self, traceset_path: str, definition_path: str):
@@ -13,12 +74,12 @@ class FlashInferKernel:
         res = KernelProperties()
         definition = self.definition
         solution = load_json_file(Solution, solution_path)
-        selected_workload = load_jsonl_file(Trace, workload_path)
+        selected_workload = load_json_file(Trace, workload_path)
         temp_traceset = TraceSet(
             root=self.traceset.root,
             definitions={definition.name: definition},
             solutions={definition.name: [solution]},
-            workloads={definition.name: selected_workload},
+            workloads={definition.name: [selected_workload]},
             traces={definition.name: []},
         )
         cfg = BenchmarkConfig()
@@ -58,63 +119,9 @@ class FlashInferKernel:
             raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
         return single_trace, res
 
-    def save_solution(self, code, **kwargs) -> Path:
-        definition = self.definition
-        solutions_dir = (
-            self.traceset.root / "solutions" / definition.op_type / definition.name
-        )
-        solutions_dir.mkdir(parents=True, exist_ok=True)
+    def create_and_save_solution(self, code, **kwargs) -> Path:
+        return create_and_save_solution(self.traceset, self.definition, code, **kwargs)
 
-        # Create filename using solution name
-        solution = self._create_solution_from_code(code, definition, **kwargs)
-        solution_filename = f"{solution.name}.json"
-        solution_path = solutions_dir / solution_filename
-
-        save_json_file(solution, solution_path)
-        return solution_path
-
-    def _get_supported_language(self, language: str) -> SupportedLanguages:
-        language_map = {
-            "triton": SupportedLanguages.TRITON,
-        }
-        if language.lower() in language_map:
-            return language_map[language.lower()]
-        else:
-            raise ValueError(f"Unsupported language: {language}")
-
-    def _create_solution_from_code(
-        self, code, definition: Definition, **kwargs
-    ) -> Solution:
-        solution_name = kwargs.get("name", "default_solution")
-        solution_description = kwargs.get("description", "default_description")
-        language = self._get_supported_language(kwargs.get("language", "triton"))
-
-        if language == SupportedLanguages.CUDA and isinstance(code, dict):
-            sources = []
-            for filename, content in code.items():
-                sources.append(SourceFile(path=filename, content=content))
-
-            entry_point = "main.cpp::run"
-        else:
-            if isinstance(code, dict):
-                code = next(iter(code.values()))
-
-            sources = [SourceFile(path="main.py", content=code)]
-            entry_point = "main.py::run"
-
-        solution = Solution(
-            name=solution_name,
-            definition=definition.name,
-            author=kwargs.get("author", "AccelOpt"),
-            spec=BuildSpec(
-                language=language,
-                target_hardware=[kwargs.get("target_gpu", "H100")],
-                entry_point=entry_point,
-            ),
-            sources=sources,
-            description=solution_description,
-        )
-        return solution
 
 # https://github.com/flashinfer-ai/flashinfer-bench/blob/93bf860d9730dec3fc990ce38ce01814ffea4118/examples/kernel_generator/kernel_generator_prompts.py#L8
 def format_definition(definition: Definition) -> str:

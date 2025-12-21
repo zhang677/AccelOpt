@@ -1,5 +1,5 @@
 from flashinfer_bench import TraceSet, Trace
-from flashinfer_bench.data import load_jsonl_file, save_json_file, save_jsonl_file
+from flashinfer_bench.data import load_jsonl_file, save_json_file
 from pathlib import Path
 import pandas as pd
 def find_first(list, predicate):
@@ -19,12 +19,12 @@ output_table = []
 for trace in selected_traces:
     workload = trace.workload
     trace_definition = traceset.definitions[trace.definition]
-    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}.jsonl"
+    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}.json"
     workload_trace = Trace(
         definition=trace.definition,
         workload=workload,
     )
-    save_jsonl_file([workload_trace], workload_path)
+    save_json_file(workload_trace, workload_path)
 
     # Create solutions
 

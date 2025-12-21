@@ -1,0 +1,42 @@
+{
+  "definition": "mla_paged_decode_h16_ckv512_kpe64_ps1",
+  "workload": {
+    "axes": {
+      "batch_size": 64,
+      "num_pages": 989669,
+      "len_indptr": 65,
+      "num_kv_indices": 62345
+    },
+    "inputs": {
+      "q_nope": {
+        "type": "random"
+      },
+      "q_pe": {
+        "type": "random"
+      },
+      "ckv_cache": {
+        "type": "random"
+      },
+      "kpe_cache": {
+        "type": "random"
+      },
+      "sm_scale": {
+        "type": "scalar",
+        "value": 0.1352337747812271
+      },
+      "kv_indptr": {
+        "type": "safetensors",
+        "path": "./blob/workloads/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1/mla_meta_2623004a2d23ebf6825a01a2050e494d.safetensors",
+        "tensor_key": "kv_indptr"
+      },
+      "kv_indices": {
+        "type": "safetensors",
+        "path": "./blob/workloads/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1/mla_meta_2623004a2d23ebf6825a01a2050e494d.safetensors",
+        "tensor_key": "kv_indices"
+      }
+    },
+    "uuid": "939f995a-1ab2-4d19-8d94-50f07e73542d"
+  },
+  "solution": null,
+  "evaluation": null
+}

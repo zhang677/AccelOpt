@@ -192,7 +192,7 @@ if __name__ == "__main__":
     mock_solution = load_json_file(Solution, mock_kernel_path)
     kernel_code = mock_solution.sources[0].content
     kernel = FlashInferKernel(checkpoint_path, definition_path)
-    solution_path = kernel.save_solution(
+    solution_path = kernel.create_and_save_solution(
         kernel_code,
         author="AccelOpt",
         language="triton",
