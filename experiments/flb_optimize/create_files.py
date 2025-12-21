@@ -1,5 +1,5 @@
 from flashinfer_bench import TraceSet, Trace
-from flashinfer_bench.data import load_jsonl_file, save_json_file
+from flashinfer_bench.data import load_jsonl_file, save_json_file, save_jsonl_file
 from pathlib import Path
 import pandas as pd
 def find_first(list, predicate):
@@ -12,15 +12,19 @@ def find_first(list, predicate):
 output_base_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize")
 traceset_path = Path("/home/ubuntu/flashinfer-trace")
 traceset = TraceSet.from_path(traceset_path)
-selected_json_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize/selected_traces_triton.jsonl")
+selected_json_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize/partial_selected_traces_triton.jsonl")
 selected_traces = load_jsonl_file(Trace, selected_json_path)
 output_table = []
 # Create workloads
 for trace in selected_traces:
     workload = trace.workload
     trace_definition = traceset.definitions[trace.definition]
-    workload_path = output_base_path / "workloads" / trace_definition.op_type / trace.definition/ f"{trace.definition}.json"
-    save_json_file(workload, workload_path)
+    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}.jsonl"
+    workload_trace = Trace(
+        definition=trace.definition,
+        workload=workload,
+    )
+    save_jsonl_file([workload_trace], workload_path)
 
     # Create solutions
 
@@ -33,7 +37,7 @@ for trace in selected_traces:
 
     # Create definitions
     trace_definition = traceset.definitions[trace.definition]
-    definition_path = output_base_path / "definitions" / trace_definition.op_type / trace.definition / f"{trace.definition}.json"
+    definition_path = output_base_path / "definitions" / trace_definition.op_type / f"{trace.definition}.json"
     save_json_file(trace_definition, definition_path)
 
     output_table.append({

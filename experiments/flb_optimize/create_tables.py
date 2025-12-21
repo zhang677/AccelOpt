@@ -19,7 +19,7 @@ output_table = []
 for trace in selected_traces:
     workload = trace.workload
     trace_definition = traceset.definitions[trace.definition]
-    workload_path = output_base_path / "workloads" / trace_definition.op_type / trace.definition/ f"{trace.definition}.json"
+    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}.jsonl"
 
     # Create solutions
 
@@ -31,7 +31,7 @@ for trace in selected_traces:
 
     # Create definitions
     trace_definition = traceset.definitions[trace.definition]
-    definition_path = output_base_path / "definitions" / trace_definition.op_type / trace.definition / f"{trace.definition}.json"
+    definition_path = output_base_path / "definitions" / trace_definition.op_type / f"{trace.definition}.json"
 
     output_table.append({
         "definition_path": definition_path,

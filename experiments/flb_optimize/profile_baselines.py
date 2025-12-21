@@ -1,0 +1,37 @@
+from accelopt.flb_wrapper import FlashInferKernel
+from flashinfer_bench import Definition
+from flashinfer_bench.data import save_json_file, load_json_file
+from pathlib import Path
+import pandas as pd
+from tqdm import tqdm
+
+def main():
+    selected_traces_df = pd.read_csv("/home/ubuntu/AccelOpt/experiments/flb_optimize/partial_selected_traces_triton.csv")
+    traceset_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
+    output_base_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize")
+    output_rows = []
+    for index, row in tqdm(selected_traces_df.iterrows()):
+        def_path = row["definition_path"]
+        solution_path = row["solution_path"]
+        workload_path = row["workload_path"]
+        kernel = FlashInferKernel(traceset_path, def_path)
+        trace, res = kernel.profile(
+            solution_path,
+            workload_path=workload_path,
+            timeout_seconds=300,
+            profile_baseline=True
+        )
+        definition = load_json_file(Definition, def_path)
+        output_trace_path = output_base_path / "traces" / definition.op_type / Path(solution_path).name
+        save_json_file(trace, output_trace_path)
+        output_rows.append({
+            **row,
+            "trace_path": output_trace_path
+        })
+
+    output_df = pd.DataFrame(output_rows)
+    output_df.to_csv(output_base_path / "partial_profiled_baselines.csv", index=False)
+
+
+if __name__ == "__main__":
+    main()

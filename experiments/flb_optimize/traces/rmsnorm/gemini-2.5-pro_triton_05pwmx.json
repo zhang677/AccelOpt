@@ -1,0 +1,44 @@
+{
+  "definition": "fused_add_rmsnorm_h7168",
+  "workload": {
+    "axes": {
+      "batch_size": 14521
+    },
+    "inputs": {
+      "hidden_states": {
+        "type": "random"
+      },
+      "residual": {
+        "type": "random"
+      },
+      "weight": {
+        "type": "random"
+      }
+    },
+    "uuid": "d9c27791-1f27-4feb-adb6-aa8a8c20556f"
+  },
+  "solution": "gemini-2.5-pro_triton_05pwmx",
+  "evaluation": {
+    "status": "PASSED",
+    "environment": {
+      "hardware": "NVIDIA H100 80GB HBM3",
+      "libs": {
+        "torch": "2.9.1+cu128",
+        "triton": "3.5.1",
+        "cuda": "12.8"
+      }
+    },
+    "timestamp": "2025-12-21T01:04:52.079416",
+    "log": "",
+    "correctness": {
+      "max_relative_error": 0.007751937955617905,
+      "max_absolute_error": 0.03125,
+      "extra": null
+    },
+    "performance": {
+      "latency_ms": 0.2094165824666252,
+      "reference_latency_ms": 2.3923898617426556,
+      "speedup_factor": 11.424070785435205
+    }
+  }
+}

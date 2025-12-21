@@ -1,0 +1,60 @@
+{
+  "definition": "gqa_ragged_prefill_causal_h32_kv4_d128",
+  "workload": {
+    "axes": {
+      "len_indptr": 34,
+      "total_q": 16294,
+      "total_kv": 16294
+    },
+    "inputs": {
+      "q": {
+        "type": "random"
+      },
+      "k": {
+        "type": "random"
+      },
+      "v": {
+        "type": "random"
+      },
+      "qo_indptr": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_ragged/gqa_ragged_prefill_causal_h32_kv4_d128/gqa_ragged_prefill_causal_h32_kv4_d128_ded3766b4cbb47ababd4a5a3ae868872.safetensors",
+        "tensor_key": "qo_indptr"
+      },
+      "kv_indptr": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_ragged/gqa_ragged_prefill_causal_h32_kv4_d128/gqa_ragged_prefill_causal_h32_kv4_d128_ded3766b4cbb47ababd4a5a3ae868872.safetensors",
+        "tensor_key": "kv_indptr"
+      },
+      "sm_scale": {
+        "type": "scalar",
+        "value": 0.0883883461356163
+      }
+    },
+    "uuid": "007ddabb-3c8c-48a1-a693-c0618d32243c"
+  },
+  "solution": "claude-opus-4-1_triton_28277f",
+  "evaluation": {
+    "status": "PASSED",
+    "environment": {
+      "hardware": "NVIDIA H100 80GB HBM3",
+      "libs": {
+        "torch": "2.9.1+cu128",
+        "triton": "3.5.1",
+        "cuda": "12.8"
+      }
+    },
+    "timestamp": "2025-12-21T01:02:42.967475",
+    "log": "",
+    "correctness": {
+      "max_relative_error": 3423.7421875,
+      "max_absolute_error": 0.015625,
+      "extra": null
+    },
+    "performance": {
+      "latency_ms": 9.370487531026205,
+      "reference_latency_ms": 52.92939758300781,
+      "speedup_factor": 5.648521211703835
+    }
+  }
+}

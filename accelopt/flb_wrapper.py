@@ -1,55 +1,39 @@
-# AccelOpt: service_name,task,kernel,problem,values,case_name
-from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig, EvaluationStatus
-from flashinfer_bench.data import save_json_file, load_json_file
+from .eval_numpy import KernelProperties
 from pathlib import Path
-from pydantic import BaseModel, Field
-import json
-from accelopt.flb_wrapper import FlashInferKernel
-import uuid
-# Profile a solution https://github.com/flashinfer-ai/flashinfer-bench/blob/main/examples/kernel_generator/kernel_generator.py#L445
-# Does FlashInfer-Bench prefer string or file path?
-# (traceset, definition, [solution], selected_workload)
-# self.traceset
-# Path to definition
-# code of solution
-# Path to workload
+from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig, EvaluationStatus
+from flashinfer_bench.data import save_json_file, load_json_file, load_jsonl_file
 
-class KernelProperties(BaseModel):
-    """
-    Single Kernel Execution
-    """
-    compiled: bool = False
-    correct: bool = False
-    runnable: bool = False
-    metadata: dict = Field(default_factory=dict)
-
-class FlashInferKernelLocal:
+class FlashInferKernel:
     def __init__(self, traceset_path: str, definition_path: str):
         self.traceset = TraceSet.from_path(traceset_path)
         self.definition = load_json_file(Definition, definition_path)
 
-    def profile(self, solution_path, workload_path: str, **kwargs) -> Evaluation:
+    def profile(self, solution_path, workload_path: str, **kwargs) -> tuple[Trace, KernelProperties]:
+        # Only support single workload for now
         res = KernelProperties()
         definition = self.definition
         solution = load_json_file(Solution, solution_path)
-        selected_workload = load_json_file(Trace, workload_path)
+        selected_workload = load_jsonl_file(Trace, workload_path)
         temp_traceset = TraceSet(
             root=self.traceset.root,
             definitions={definition.name: definition},
             solutions={definition.name: [solution]},
-            workloads={definition.name: [selected_workload, selected_workload]},
+            workloads={definition.name: selected_workload},
             traces={definition.name: []},
         )
         cfg = BenchmarkConfig()
-        cfg.profile_baseline = False
+        cfg.profile_baseline = kwargs.get("profile_baseline", False)
+        cfg.use_isolated_runner = kwargs.get("use_isolated_runner", False)
         cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
         benchmark = Benchmark(temp_traceset, cfg)
         result_traceset = benchmark.run_all()
-
+        
         traces = result_traceset.traces.get(definition.name, [])
 
         trace_map = {trace.solution: trace for trace in traces}
-        evaluation = trace_map.get(solution.name).evaluation
+        single_trace = trace_map.get(solution.name)
+        evaluation = single_trace.evaluation
+
         if evaluation.status == EvaluationStatus.PASSED:
             res.compiled = True
             res.runnable = True
@@ -72,7 +56,7 @@ class FlashInferKernelLocal:
             res.metadata = {"compilation_error": evaluation.log}
         else:
             raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
-        return res
+        return single_trace, res
 
     def save_solution(self, code, **kwargs) -> Path:
         definition = self.definition
@@ -132,82 +116,44 @@ class FlashInferKernelLocal:
         )
         return solution
 
+# https://github.com/flashinfer-ai/flashinfer-bench/blob/93bf860d9730dec3fc990ce38ce01814ffea4118/examples/kernel_generator/kernel_generator_prompts.py#L8
+def format_definition(definition: Definition) -> str:
+    axes_str = "\nAxes:\n"
+    for name, axis in definition.axes.items():
+        if hasattr(axis, "value"):
+            axes_str += f"  {name}: constant = {axis.value}"
+        else:
+            axes_str += f"  {name}: variable"
+        if axis.description:
+            axes_str += f" ({axis.description})"
+        axes_str += "\n"
 
-if __name__ == "__main__":
-    # Check all definitions
-    import os
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-    
-    traceset_path = "/home/ubuntu/flashinfer-trace"
-    print(f"Loading TraceSet from: {traceset_path}")
-    traceset = TraceSet.from_path(traceset_path)
+    # Format inputs
+    inputs_str = "\nInputs:\n"
+    for name, spec in definition.inputs.items():
+        shape_str = "scalar" if spec.shape is None else f"[{', '.join(spec.shape)}]"
+        inputs_str += f"  {name}: {shape_str} ({spec.dtype})"
+        if spec.description:
+            inputs_str += f" - {spec.description}"
+        inputs_str += "\n"
 
-    all_definitions = traceset.definitions
-    all_definitions_keys = list(all_definitions.keys()) # case_name
-    # print(all_definitions_keys)
-    case_name = 'gemm_n128_k2048'
-    single_definition = all_definitions[case_name]
-    problem = single_definition.op_type # problem
-    print(problem)
-    symbolic_values = single_definition.axes # symbolic value
-    print(symbolic_values)
+    outputs_str = "\nOutputs:\n"
+    for name, spec in definition.outputs.items():
+        shape_str = "scalar" if spec.shape is None else f"[{', '.join(spec.shape)}]"
+        outputs_str += f"  {name}: {shape_str} ({spec.dtype})"
+        if spec.description:
+            outputs_str += f" - {spec.description}"
+        outputs_str += "\n"
 
-    # Concrete values are needed to calculate the theoretical peak
-    all_workloads = traceset.workloads
-    single_workload = all_workloads[case_name][-3] # concrete value
-    print(single_workload)
+    constraints_str = ""
+    if definition.constraints:
+        constraints_str = "\nConstraints:\n"
+        for constraint in definition.constraints:
+            constraints_str += f"  - {constraint}\n"
 
+    return f"""Name: {definition.name}
+Type: {definition.op_type}
+{axes_str}{inputs_str}{outputs_str}{constraints_str}
 
-    # Retrieve a solution
-    all_solutions = traceset.solutions
-    case_solutions = all_solutions[case_name]
-    case_single_solution = case_solutions[-2]
-    assert case_single_solution.spec.language == 'triton'
-    kernel_code = case_single_solution.sources[0].content # kernel code
-
-    task_code = single_definition.reference # task code
-    print(task_code)
-    
-
-    checkpoint_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
-    
-    # Profile baseline kernel
-    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/gemm/gemm_n28672_k4096.json"
-    # workload_path = "/home/ubuntu/flashinfer-trace/workloads/gemm/gemm_n128_k2048.jsonl"
-    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/gemm/gemm_n28672_k4096.jsonl"
-    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/gemm/gemm_n28672_k4096/claude-opus-4-1_triton_79b898.json"
-    baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
-    baseline_res = baseline_kernel.profile(
-        baseline_path,
-        workload_path=workload_path,
-        timeout_seconds=300,
-        profile_baseline=True,
-        use_isolated_runner=True
-    )
-    print(baseline_res)
-    
-    
-    # Register a solution to FlashInfer-Trace
-    mock_kernel_path = baseline_path
-    mock_solution = load_json_file(Solution, mock_kernel_path)
-    kernel_code = mock_solution.sources[0].content
-    kernel = FlashInferKernel(checkpoint_path, definition_path)
-    solution_path = kernel.save_solution(
-        kernel_code,
-        author="AccelOpt",
-        language="triton",
-        target_gpu="H100",
-        name=f"optimized_{uuid.uuid4()}",
-        description=f"Optimized kernel"
-    )
-    res = kernel.profile(
-        solution_path, 
-        workload_path=workload_path,
-        timeout_seconds=300,
-        profile_baseline=True,
-        use_isolated_runner=True
-    )
-    print(res)
-
-    print(f"Solution saved to: {solution_path}")
-
+Reference Implementation:
+{definition.reference}"""

@@ -2,6 +2,16 @@ import sys
 import numpy as np
 import re
 from pathlib import Path
+from pydantic import BaseModel, Field
+
+class KernelProperties(BaseModel):
+    """
+    Single Kernel Execution
+    """
+    compiled: bool = False
+    correct: bool = False
+    runnable: bool = False
+    metadata: dict = Field(default_factory=dict)
 
 # Function to load module from file path
 def load_module_from_path(file_path):

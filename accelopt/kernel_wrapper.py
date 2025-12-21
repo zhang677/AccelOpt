@@ -2,12 +2,8 @@ import json, uuid, time, tempfile
 import os
 import traceback
 import numpy as np
-from .eval_numpy import load_module_from_path, check_precision_and_correctness
-from pydantic import BaseModel, Field
+from .eval_numpy import load_module_from_path, check_precision_and_correctness, KernelProperties
 import neuronxcc.nki as nki
-from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig, EvaluationStatus
-from flashinfer_bench.data import save_json_file, load_json_file
-from pathlib import Path
 
 def get_latency(nki_kernel_fn, nki_inputs, artifact_dir):
     kernel_id = uuid.uuid4()
@@ -45,15 +41,6 @@ def benchmark_latency(warmpup_iterations, benchmark_iterations, nki_kernel_fn, n
     }
     return runtime_stats
 
-class KernelProperties(BaseModel):
-    """
-    Single Kernel Execution
-    """
-    compiled: bool = False
-    correct: bool = False
-    runnable: bool = False
-    metadata: dict = Field(default_factory=dict)
-
 class NKIKernel:
     def __init__(self, program_path: str, base_numpy_path: str):
         self.program_path = program_path
@@ -63,6 +50,7 @@ class NKIKernel:
         self.perf_tol = 0.01
 
     def profile(self, save_fields: list[str] = []):
+
         os.environ["NEURON_CC_FLAGS"] = "--auto-cast=none"
         os.environ['NEURON_RT_NUM_CORES']= '1'
         np.random.seed(42)
@@ -161,113 +149,3 @@ class NKIKernel:
                 self.res.metadata["benchmarking_error"] = traceback.format_exc()
                 return self.res
             return self.res
-
-class FlashInferKernel:
-    def __init__(self, traceset_path: str, definition_path: str):
-        self.traceset = TraceSet.from_path(traceset_path)
-        self.definition = load_json_file(Definition, definition_path)
-
-    def profile(self, solution_path, workload_path: str, **kwargs) -> Evaluation:
-        # Only support single workload for now
-        res = KernelProperties()
-        definition = self.definition
-        solution = load_json_file(Solution, solution_path)
-        selected_workload = load_json_file(Trace, workload_path)
-        temp_traceset = TraceSet(
-            root=self.traceset.root,
-            definitions={definition.name: definition},
-            solutions={definition.name: [solution]},
-            workloads={definition.name: [selected_workload]},
-            traces={definition.name: []},
-        )
-        cfg = BenchmarkConfig()
-        cfg.profile_baseline = False
-        cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
-        benchmark = Benchmark(temp_traceset, cfg)
-        result_traceset = benchmark.run_all()
-
-        traces = result_traceset.traces.get(definition.name, [])
-
-        trace_map = {trace.solution: trace for trace in traces}
-        evaluation = trace_map.get(solution.name).evaluation
-        if evaluation.status == EvaluationStatus.PASSED:
-            res.compiled = True
-            res.runnable = True
-            res.correct = True
-            res.metadata = {"latency": evaluation.performance.latency_ms}
-        elif evaluation.status in [EvaluationStatus.INCORRECT_SHAPE, EvaluationStatus.INCORRECT_NUMERICAL, EvaluationStatus.INCORRECT_DTYPE]:
-            res.compiled = True
-            res.runnable = True
-            res.correct = False
-            res.metadata = {"correctness_error": evaluation.log}
-        elif evaluation.status == EvaluationStatus.RUNTIME_ERROR:
-            res.compiled = True
-            res.runnable = False
-            res.correct = False
-            res.metadata = {"runtime_error": evaluation.log}
-        elif evaluation.status in [EvaluationStatus.COMPILATION_ERROR, EvaluationStatus.TIMEOUT]:
-            res.compiled = False
-            res.runnable = False
-            res.correct = False
-            res.metadata = {"compilation_error": evaluation.log}
-        else:
-            raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
-        return res
-
-    def save_solution(self, code, **kwargs) -> Path:
-        definition = self.definition
-        solutions_dir = (
-            self.traceset.root / "solutions" / definition.op_type / definition.name
-        )
-        solutions_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create filename using solution name
-        solution = self._create_solution_from_code(code, definition, **kwargs)
-        solution_filename = f"{solution.name}.json"
-        solution_path = solutions_dir / solution_filename
-
-        save_json_file(solution, solution_path)
-        return solution_path
-
-    def _get_supported_language(self, language: str) -> SupportedLanguages:
-        language_map = {
-            "triton": SupportedLanguages.TRITON,
-        }
-        if language.lower() in language_map:
-            return language_map[language.lower()]
-        else:
-            raise ValueError(f"Unsupported language: {language}")
-
-    def _create_solution_from_code(
-        self, code, definition: Definition, **kwargs
-    ) -> Solution:
-        solution_name = kwargs.get("name", "default_solution")
-        solution_description = kwargs.get("description", "default_description")
-        language = self._get_supported_language(kwargs.get("language", "triton"))
-
-        if language == SupportedLanguages.CUDA and isinstance(code, dict):
-            sources = []
-            for filename, content in code.items():
-                sources.append(SourceFile(path=filename, content=content))
-
-            entry_point = "main.cpp::run"
-        else:
-            if isinstance(code, dict):
-                code = next(iter(code.values()))
-
-            sources = [SourceFile(path="main.py", content=code)]
-            entry_point = "main.py::run"
-
-        solution = Solution(
-            name=solution_name,
-            definition=definition.name,
-            author=kwargs.get("author", "AccelOpt"),
-            spec=BuildSpec(
-                language=language,
-                target_hardware=[kwargs.get("target_gpu", "H100")],
-                entry_point=entry_point,
-            ),
-            sources=sources,
-            description=solution_description,
-        )
-        return solution

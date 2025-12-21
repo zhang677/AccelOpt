@@ -1,0 +1,61 @@
+{
+  "definition": "gqa_paged_decode_h32_kv4_d128_ps1",
+  "workload": {
+    "axes": {
+      "batch_size": 64,
+      "num_pages": 61535,
+      "len_indptr": 65,
+      "num_kv_indices": 61519
+    },
+    "inputs": {
+      "q": {
+        "type": "random"
+      },
+      "k_cache": {
+        "type": "random"
+      },
+      "v_cache": {
+        "type": "random"
+      },
+      "kv_indptr": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/gqa_paged_decode_h32_kv4_d128_ps1_e8b4070113524d62974186eb7226bab6.safetensors",
+        "tensor_key": "kv_indptr"
+      },
+      "kv_indices": {
+        "type": "safetensors",
+        "path": "./blob/workloads/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/gqa_paged_decode_h32_kv4_d128_ps1_e8b4070113524d62974186eb7226bab6.safetensors",
+        "tensor_key": "kv_indices"
+      },
+      "sm_scale": {
+        "type": "scalar",
+        "value": 0.0883883461356163
+      }
+    },
+    "uuid": "7a7fc288-c6af-40ce-8b64-7a18408d3d25"
+  },
+  "solution": "gpt-5_triton_f88811",
+  "evaluation": {
+    "status": "PASSED",
+    "environment": {
+      "hardware": "NVIDIA H100 80GB HBM3",
+      "libs": {
+        "torch": "2.9.1+cu128",
+        "triton": "3.5.1",
+        "cuda": "12.8"
+      }
+    },
+    "timestamp": "2025-12-21T01:01:52.841437",
+    "log": "",
+    "correctness": {
+      "max_relative_error": 0.08199726045131683,
+      "max_absolute_error": 0.0009765625,
+      "extra": null
+    },
+    "performance": {
+      "latency_ms": 0.4434529089868859,
+      "reference_latency_ms": 478.15537516276044,
+      "speedup_factor": 1078.2551325577183
+    }
+  }
+}
