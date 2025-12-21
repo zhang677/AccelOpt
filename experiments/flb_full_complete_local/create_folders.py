@@ -1,0 +1,84 @@
+import pandas as pd
+import os
+import shutil
+from datetime import datetime
+from zoneinfo import ZoneInfo
+LA = ZoneInfo("America/Los_Angeles")
+from flashinfer_bench import Solution
+from flashinfer_bench.data import load_json_file
+
+def construct_folder_name(solution: Solution) -> str:
+    folder_name = f"{solution.definition}_{solution.name}"
+    return folder_name
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--project_name", type=str, required=True)
+parser.add_argument("--org_name", type=str, required=True)
+parser.add_argument("--exp_date_base", type=str, required=True)
+args = parser.parse_args()
+project_name = args.project_name
+org_name = args.org_name
+exp_date_base = args.exp_date_base
+
+ITERS=15
+BREADTH=12
+TOPK_CANDIDATES=6
+NUM_SAMPLES=2
+MAX_THRESHOLD=1.04
+MIN_THRESHOLD=1.15
+TOPK=8
+EXP_N=16
+
+config_dirs=[
+    "./configs",
+]
+
+proxy_problem_list_file="candidates.csv"
+proxy_profile_results_file="profile_results.csv"
+proxy_problem_list_df = pd.read_csv(proxy_problem_list_file)
+proxy_profile_results_df = pd.read_csv(proxy_profile_results_file)
+
+
+exp_base_dir = f"../checkpoints/{exp_date_base}"
+exp_base_dir = os.path.abspath(exp_base_dir)
+ACCELOPT_BASE_DIR = os.getenv("ACCELOPT_BASE_DIR")
+single_loop_exec = os.path.join(ACCELOPT_BASE_DIR, "templates", "flb", "complete_local", "run_single_loop.sh")
+
+first_exp_date = datetime.now(LA).strftime("%m-%d-%H-%M")
+for index, row in proxy_problem_list_df.iterrows():
+    service_name = construct_folder_name(
+        load_json_file(Solution, row["solution_path"])
+    )
+    
+    new_exp_base_dir = os.path.join(exp_base_dir, service_name)
+    os.makedirs(new_exp_base_dir, exist_ok=False)
+    new_exp_config_dir = os.path.join(new_exp_base_dir, "configs")
+    shutil.copytree(config_dirs[index % len(config_dirs)], new_exp_config_dir, dirs_exist_ok=True)
+    eval_prefix = f"eval-{index}-{exp_date_base}"
+    eval_first_exp_date = f"{eval_prefix}-{first_exp_date}"
+    new_exp_candidates_dir = os.path.join(new_exp_base_dir, eval_first_exp_date, "candidates")
+    os.makedirs(new_exp_candidates_dir, exist_ok=False)
+
+    profile_results_df = proxy_profile_results_df[proxy_profile_results_df["solution_path"] == row["solution_path"]]
+    profile_results_df.to_csv(os.path.join(new_exp_candidates_dir, "profile_results.csv"), index=False)
+
+    cur_single_loop_exec_path = os.path.join(exp_base_dir, f"run_single_loop_{service_name}.sh")
+    
+    with open(single_loop_exec, "r") as f:
+        content = f.read()
+        content = content.replace("$10", str(TOPK_CANDIDATES))
+        content = content.replace("$11", str(NUM_SAMPLES))
+        content = content.replace("$12", str(MAX_THRESHOLD))
+        content = content.replace("$13", str(MIN_THRESHOLD))
+        content = content.replace("$14", str(TOPK))
+        content = content.replace("$15", str(EXP_N))
+        content = content.replace("$1", f"\"{new_exp_base_dir}\"")
+        content = content.replace("$2", f"\"{eval_first_exp_date}\"")
+        content = content.replace("$3", f"\"{eval_prefix}\"")
+        content = content.replace("$4", f"\"{project_name}\"")
+        content = content.replace("$5", f"\"{org_name}\"")
+        content = content.replace("$6", str(ITERS))
+        content = content.replace("$7", str(BREADTH))
+        with open(cur_single_loop_exec_path, "w") as f:
+            f.write(content)

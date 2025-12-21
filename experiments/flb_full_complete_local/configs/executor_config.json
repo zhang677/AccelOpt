@@ -1,0 +1,5 @@
+{
+    "url": "http://localhost:31001/v1",
+    "model": "openai/gpt-oss-120b",
+    "api_key": "None"
+}

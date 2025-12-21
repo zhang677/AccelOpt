@@ -49,7 +49,7 @@ class FlashInferKernel:
             res.runnable = False
             res.correct = False
             res.metadata = {"runtime_error": evaluation.log}
-        elif evaluation.status in [EvaluationStatus.COMPILATION_ERROR, EvaluationStatus.TIMEOUT]:
+        elif evaluation.status in [EvaluationStatus.COMPILE_ERROR, EvaluationStatus.TIMEOUT]:
             res.compiled = False
             res.runnable = False
             res.correct = False
