@@ -1,0 +1,20 @@
+An agent has analyzed the baseline Triton kernel with a list of optimization plans.
+Please concretize the optimization plan and co-optimize the `run` function and the triton kernel function it calls.
+Don't use lower precision than the baseline kernel even if the optimization plan suggests it.
+
+# Problem Specification:
+```
+{problem_code}
+```
+
+# Baseline Implementation:
+```
+{kernel_code}
+```
+
+# Optimization plan
+```
+{optimization_plan}
+```
+
+Output the optimized `run` function and the triton kernel function it calls wrapped in code block.

@@ -28,7 +28,7 @@ python $CONSTRUCT_EXPERIENCE_EXEC \
 
 mkdir -p $EXP_DIR/planner_prompts
 PLANNER_PROMPT_CONSTRUCTOR_EXEC="$ACCELOPT_BASE_DIR/prompts/planner_prompts/construct_base_prompt.py"
-PLANNER_PROMPT_CONSTRUCTOR_ORIGINAL_BASE_PROMPT_PATH="$ACCELOPT_BASE_DIR/prompts/planner_prompts/base_prompt.txt"
+PLANNER_PROMPT_CONSTRUCTOR_ORIGINAL_BASE_PROMPT_PATH="$ACCELOPT_BASE_DIR/prompts/flb/planner_prompts/base_prompt.txt"
 PLANNER_PROMPT_CONSTRUCTOR_NEW_BASE_PROMPT_PATH="$EXP_DIR/planner_prompts/base_prompt.txt"
 python $PLANNER_PROMPT_CONSTRUCTOR_EXEC --original_base_prompt_path $PLANNER_PROMPT_CONSTRUCTOR_ORIGINAL_BASE_PROMPT_PATH \
     --summarizer_output_list_path $CONSTRUCT_EXPERIENCE_OUTPUT_PATH \
@@ -50,8 +50,8 @@ python $PLANNER_EXEC --output_path $PLANNER_OUTPUT_PATH \
 #    --displayed_profiles_path $PLANNER_DISPLAYED_PROFILES_PATH
 
 SINGLE_EXECUTOR_EXEC="$ACCELOPT_BASE_DIR/scripts/flb/executor.py"
-EXECUTOR_BASE_PROMPT_PATH="$ACCELOPT_BASE_DIR/prompts/executor_prompts/base_prompt.txt"
-EXECUTOR_USER_TEMPLATE_PATH="$ACCELOPT_BASE_DIR/prompts/executor_prompts/user_prompt_template.txt"
+EXECUTOR_BASE_PROMPT_PATH="$ACCELOPT_BASE_DIR/prompts/flb/executor_prompts/base_prompt.txt"
+EXECUTOR_USER_TEMPLATE_PATH="$ACCELOPT_BASE_DIR/prompts/flb/executor_prompts/user_prompt_template.txt"
 # SAVE_FIELDS_PATH="$ACCELOPT_BASE_DIR/prompts/profile_list.json"
 EXECUTOR_MODEL_CONFIG_PATH="$EXP_BASE_DIR/configs/executor_config.json"
 EXECUTOR_LOG_OUTPUT_PATH="$EXP_DIR/executor_results.json"

@@ -14,11 +14,6 @@ MIN_THRESHOLD=$13
 TOPK=$14
 EXP_N=$15
 
-# Only required for the very first iteration
-> "$EXP_BASE_DIR/log.txt"
-echo "$INIT_EXP_DATE" >> "$EXP_BASE_DIR/log.txt"
-$ACCELOPT_BASE_DIR/templates/flb/complete_local/run_first.sh $INIT_EXP_DATE $EXP_BASE_DIR $EXPERIENCE_LIST_PATH $BREADTH $NUM_SAMPLES $EXP_N $PROJECT_NAME $ORG_NAME $TRACESET_ROOT
-
 
 LAST_EXP_DATE=$INIT_EXP_DATE
 for i in $(seq 1 $ITERS); do

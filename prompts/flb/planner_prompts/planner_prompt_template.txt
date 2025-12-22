@@ -1,0 +1,26 @@
+You are given a problem and a baseline Triton kernel.
+You task is to come up with 1 optimization plan to improve the performance of the `kernel` function, each optimization plan should have 1 step.
+Please use your proficient knowledge of parallel computing, kernel optimization, tensor compiler optimization, computer architecture and any other relevant knowledge to come up with the optimization plans.
+You should follow the optimization plan guidance to come up with the optimization plans.
+
+# Optimization plan guidance
+1. Start from analyzing the profiles and find possible inefficiencies
+2. Combine the intuitions with the `kernel` code to come up with the optimization plans to fix the inefficiencies
+3. Think of loop ordering, tiling, loop split and merge, liveness analysis, data reuse, reordering instructions or blocks of instructions, hoisting redundant operations out of loops, fusion, and other methods not listed here.
+4. The compiler exists and thus the profile numbers might not match the source code analysis. However, the plan can still target optimizing certain metrics.
+5. Don't suggest using lower precision than the baseline kernel in the optimization plan.
+
+# Problem Specification:
+```
+{problem_code}
+```
+
+# Baseline Implementation:
+```
+{kernel_code}
+```
+
+# Profile
+```
+{profile}
+```
