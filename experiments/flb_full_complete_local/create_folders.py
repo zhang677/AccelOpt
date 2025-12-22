@@ -4,12 +4,9 @@ import shutil
 from datetime import datetime
 from zoneinfo import ZoneInfo
 LA = ZoneInfo("America/Los_Angeles")
-from flashinfer_bench import Solution
+from flashinfer_bench import Solution, Trace
 from flashinfer_bench.data import load_json_file
-
-def construct_folder_name(solution: Solution) -> str:
-    folder_name = f"{solution.definition}_{solution.name}"
-    return folder_name
+from accelopt.flb_wrapper import get_unique_trace_name
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -23,8 +20,8 @@ org_name = args.org_name
 exp_date_base = args.exp_date_base
 
 ITERS=15
-BREADTH=12
-TOPK_CANDIDATES=6
+BREADTH=4
+TOPK_CANDIDATES=2
 NUM_SAMPLES=2
 MAX_THRESHOLD=1.04
 MIN_THRESHOLD=1.15
@@ -35,9 +32,7 @@ config_dirs=[
     "./configs",
 ]
 
-proxy_problem_list_file="candidates.csv"
 proxy_profile_results_file="profile_results.csv"
-proxy_problem_list_df = pd.read_csv(proxy_problem_list_file)
 proxy_profile_results_df = pd.read_csv(proxy_profile_results_file)
 
 
@@ -47,9 +42,10 @@ ACCELOPT_BASE_DIR = os.getenv("ACCELOPT_BASE_DIR")
 single_loop_exec = os.path.join(ACCELOPT_BASE_DIR, "templates", "flb", "complete_local", "run_single_loop.sh")
 
 first_exp_date = datetime.now(LA).strftime("%m-%d-%H-%M")
-for index, row in proxy_problem_list_df.iterrows():
-    service_name = construct_folder_name(
-        load_json_file(Solution, row["solution_path"])
+for index, row in proxy_profile_results_df.iterrows():
+    service_name = get_unique_trace_name(
+        load_json_file(Solution, row["solution_path"]),
+        load_json_file(Trace, row["workload_path"])
     )
     
     new_exp_base_dir = os.path.join(exp_base_dir, service_name)
@@ -84,3 +80,4 @@ for index, row in proxy_problem_list_df.iterrows():
         content = content.replace("$8", f"\"{args.traceset_root}\"")
         with open(cur_single_loop_exec_path, "w") as f:
             f.write(content)
+    os.chmod(cur_single_loop_exec_path, 0o755)

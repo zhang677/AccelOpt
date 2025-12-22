@@ -200,7 +200,7 @@ def stage2_profile_and_collect(
                 metadata = kp.get("metadata", {})
                 error_msg = (metadata.get("compilation_error") or 
                            metadata.get("correctness_error") or 
-                           metadata.get("run_error") or 
+                           metadata.get("run_error") or
                            "Unknown error")
                 record_result["error"] = error_msg
             else:

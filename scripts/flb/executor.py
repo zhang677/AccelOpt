@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import multiprocessing as mp
 import time
 import asyncio
+import uuid
 import pandas as pd
 from pydantic import BaseModel
 import logfire
@@ -123,8 +124,8 @@ def stage2_profile_and_collect(
                 author="AccelOpt",
                 language="triton",
                 target_gpu="H100",
-                name=f"{case_config.service_name}_{prop_id}",
-                description=""
+                name=uuid.uuid4().hex, # Filename has to be less than 255 characters
+                description=f"{case_config.service_name}_{prop_id}"
             )
             profile_trace, kp = kernel.profile(
                 solution_path=new_solution_path,
@@ -309,11 +310,6 @@ async def main(args):
     with open(args.output_path, "w") as f:
         json.dump(output_dict, f, indent=4)
 
-    # Also save timing info (individual and combined for compatibility)
-    time_record_path = f"{args.exp_dir}/executor_start_end_time_{args.nc_id}.txt"
-    with open(time_record_path, "w") as f:
-        f.write(f"{start_time},{end_time}")
-    
     # Create combined timing file for compatibility
     combined_time_record_path = f"{args.exp_dir}/executor_start_end_time.txt"
     with open(combined_time_record_path, "w") as f:

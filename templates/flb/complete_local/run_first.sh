@@ -36,7 +36,7 @@ python $PLANNER_PROMPT_CONSTRUCTOR_EXEC --original_base_prompt_path $PLANNER_PRO
 
 PLANNER_EXEC="$ACCELOPT_BASE_DIR/scripts/flb/planner.py"
 PLANNER_OUTPUT_PATH="$EXP_DIR/planner_results.json"
-PLANNER_USER_TEMPLATE_PATH="$ACCELOPT_BASE_DIR/prompts/planner_prompts/planner_prompt_template.txt"
+PLANNER_USER_TEMPLATE_PATH="$ACCELOPT_BASE_DIR/prompts/flb/planner_prompts/planner_prompt_template.txt"
 PLANNER_PROFILE_RESULT_PATH="$EXP_DIR/candidates/profile_results.csv"
 PLANNER_MODEL_CONFIG_PATH="$EXP_BASE_DIR/configs/planner_config.json"
 # PLANNER_DISPLAYED_PROFILES_PATH="$ACCELOPT_BASE_DIR/prompts/planner_prompts/displayed_profiles.json"

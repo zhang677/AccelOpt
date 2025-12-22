@@ -16,7 +16,7 @@ def _get_supported_language(language: str) -> SupportedLanguages:
 
 
 def _create_solution_from_code(
-    self, code, definition: Definition, **kwargs
+    code, definition: Definition, **kwargs
 ) -> Solution:
     solution_name = kwargs.get("name", "default_solution")
     solution_description = kwargs.get("description", "default_description")
@@ -50,7 +50,7 @@ def _create_solution_from_code(
     return solution
 
 
-def create_and_save_solution(traceset: TraceSet, definition: Definition, code, **kwargs) -> Path:
+def create_and_save_solution(traceset: TraceSet, definition: Definition, code, **kwargs) -> str:
     solutions_dir = (
         traceset.root / "solutions" / definition.op_type / definition.name
     )
@@ -62,11 +62,11 @@ def create_and_save_solution(traceset: TraceSet, definition: Definition, code, *
     solution_path = solutions_dir / solution_filename
 
     save_json_file(solution, solution_path)
-    return solution_path
+    return str(solution_path)
 
 class FlashInferKernel:
-    def __init__(self, traceset_path: str, definition_path: str):
-        self.traceset = TraceSet.from_path(traceset_path)
+    def __init__(self, traceset_root: str, definition_path: str):
+        self.traceset = TraceSet.from_path(traceset_root)
         self.definition = load_json_file(Definition, definition_path)
 
     def profile(self, solution_path, workload_path: str, **kwargs) -> tuple[Trace, KernelProperties]:
@@ -109,7 +109,7 @@ class FlashInferKernel:
             res.compiled = True
             res.runnable = False
             res.correct = False
-            res.metadata = {"runtime_error": evaluation.log}
+            res.metadata = {"run_error": evaluation.log}
         elif evaluation.status in [EvaluationStatus.COMPILE_ERROR, EvaluationStatus.TIMEOUT]:
             res.compiled = False
             res.runnable = False
@@ -119,7 +119,7 @@ class FlashInferKernel:
             raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
         return single_trace, res
 
-    def create_and_save_solution(self, code, **kwargs) -> Path:
+    def create_and_save_solution(self, code, **kwargs) -> str:
         return create_and_save_solution(self.traceset, self.definition, code, **kwargs)
 
 
@@ -166,4 +166,4 @@ Reference Implementation:
 {definition.reference}"""
 
 def get_unique_trace_name(solution: Solution, workload: Trace) -> str:
-    return f"{solution.name}_{workload.definition}_{workload.workload.uuid[:7]}"
+    return f"{workload.definition}_{workload.workload.uuid[:7]}_{solution.name}"

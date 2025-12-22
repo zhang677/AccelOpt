@@ -11,13 +11,14 @@ from typing import List
 import random
 from flashinfer_bench import Definition, Solution, Trace
 from flashinfer_bench.data import load_json_file
+from typing import Union
 
 class UserPromptConfig(BaseModel):
     definition_path: str = ""
     solution_path: str = ""
     profile_str: str = ""
     prompt_template_path: str = ""
-    displayed_profiles_path: str = ""
+    displayed_profiles_path: Union[str, None] = None
     breadth: int = 0
 
 class PlannerResponse(BaseModel):
@@ -31,14 +32,15 @@ def construct_profile_str(trace_path: str, displayed_profile_path):
         with open(displayed_profile_path, "r") as f:
             displayed_profiles = json.load(f)
     else:
-        displayed_profiles = ["latency_ms"]
-    profile_record_dict = {"latency_ms": load_json_file(Trace, trace_path).evaluation.performance.latency_ms}
+        displayed_profiles = ["latency"]
+    profile_record_dict = {"latency": load_json_file(Trace, trace_path).evaluation.performance.latency_ms}
     # shuffle the displayed_profiles
     profile_record_keys = list(profile_record_dict.keys())
     random.shuffle(profile_record_keys)
     for profile in profile_record_keys:
         if profile in displayed_profiles:
             profile_str += f"{profile}: {profile_record_dict[profile]}\n"
+    return profile_str
 
 def construct_user_prompt(user_prompt_config: UserPromptConfig):
     with open(user_prompt_config.prompt_template_path, "r") as f:

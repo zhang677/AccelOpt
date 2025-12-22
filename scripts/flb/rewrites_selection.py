@@ -73,7 +73,8 @@ async def process_optimization_item(executor_result, k, v, args, summarizer_agen
             slow_kernel=slow_kernel,
             fast_kernel=fast_kernel
         )
-        result = await sample_once(prompt_config, summarizer_agent, f"summarizer_execution_{service_name}_{k}")
+        logfire_service_name = f"summarizer_execution_{load_json_file(Solution, service_name).name}_{k}"
+        result = await sample_once(prompt_config, summarizer_agent, logfire_service_name)
         if result is None:
             print(f"[Skip] Failed to get result for {service_name}_{k}")
             return None
@@ -227,40 +228,39 @@ async def main(args):
     with open(args.output_speedups_path, "w") as f:
         json.dump(service_name_to_selected_speedups, f, indent=4)
 
-    async with aiohttp.ClientSession() as session:
-        # Collect all tasks for parallel execution
-        tasks = []
-        
-        for executor_result in executor_results["executor_results"]:
-            service_name = executor_result["baseline_solution_path"]
-            logfire_service_name = load_json_file(Solution, service_name).name
-            logfire.configure(service_name=logfire_service_name)
-            logfire.instrument_openai()
-            if service_name not in service_name_to_selected_plan_ids:
-                continue
-            for k in service_name_to_selected_plan_ids[service_name]:
-                v = executor_result[k]
-                task = process_optimization_item(executor_result, k, v, args, summarizer_agent)
-                tasks.append(task)
-        
-        # Execute all tasks in parallel
-        print(f"Processing {len(tasks)} optimization items in parallel...")
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Filter out None results and exceptions, then build the final list
-        optimization_menu_list = []
-        for result in results:
-            if isinstance(result, Exception):
-                print(f"[Error] Task failed with exception: {result}")
-                continue
-            if result is not None:
-                optimization_menu_list.append(result)
-        
-        # Write all results to output file at the end
-        with open(args.output_list_path, "w") as f:
-            json.dump(optimization_menu_list, f, indent=4)
-        
-        print(f"Successfully processed {len(optimization_menu_list)} optimization items")
+    # Collect all tasks for parallel execution
+    tasks = []
+    
+    for executor_result in executor_results["executor_results"]:
+        service_name = executor_result["baseline_solution_path"]
+        logfire_service_name = load_json_file(Solution, service_name).name
+        logfire.configure(service_name=logfire_service_name)
+        logfire.instrument_openai()
+        if service_name not in service_name_to_selected_plan_ids:
+            continue
+        for k in service_name_to_selected_plan_ids[service_name]:
+            v = executor_result[k]
+            task = process_optimization_item(executor_result, k, v, args, summarizer_agent)
+            tasks.append(task)
+    
+    # Execute all tasks in parallel
+    print(f"Processing {len(tasks)} optimization items in parallel...")
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Filter out None results and exceptions, then build the final list
+    optimization_menu_list = []
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"[Error] Task failed with exception: {result}")
+            continue
+        if result is not None:
+            optimization_menu_list.append(result)
+    
+    # Write all results to output file at the end
+    with open(args.output_list_path, "w") as f:
+        json.dump(optimization_menu_list, f, indent=4)
+    
+    print(f"Successfully processed {len(optimization_menu_list)} optimization items")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

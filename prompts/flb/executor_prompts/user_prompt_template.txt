@@ -1,6 +1,7 @@
 An agent has analyzed the baseline Triton kernel with a list of optimization plans.
-Please concretize the optimization plan and co-optimize the `run` function and the triton kernel function it calls.
+Please concretize the optimization plan and co-optimize the `run` function and all the functions it calls.
 Don't use lower precision than the baseline kernel even if the optimization plan suggests it.
+A parameter should be defined either inside the @triton.autotune configuration or as a keyword argument of the kernel.
 
 # Problem Specification:
 ```
@@ -17,4 +18,4 @@ Don't use lower precision than the baseline kernel even if the optimization plan
 {optimization_plan}
 ```
 
-Output the optimized `run` function and the triton kernel function it calls wrapped in code block.
+Output the optimized `run` function and all the functions it calls wrapped in code block.
