@@ -164,3 +164,6 @@ Type: {definition.op_type}
 
 Reference Implementation:
 {definition.reference}"""
+
+def get_unique_trace_name(solution: Solution, workload: Trace) -> str:
+    return f"{solution.name}_{workload.definition}_{workload.workload.uuid[:7]}"

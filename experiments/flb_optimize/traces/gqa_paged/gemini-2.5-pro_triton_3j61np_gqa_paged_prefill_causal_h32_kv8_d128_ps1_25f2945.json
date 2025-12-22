@@ -41,7 +41,7 @@
   },
   "solution": "gemini-2.5-pro_triton_3j61np",
   "evaluation": {
-    "status": "INCORRECT_NUMERICAL",
+    "status": "PASSED",
     "environment": {
       "hardware": "NVIDIA H100 80GB HBM3",
       "libs": {
@@ -50,13 +50,17 @@
         "cuda": "12.8"
       }
     },
-    "timestamp": "2025-12-21T01:02:16.265366",
+    "timestamp": "2025-12-21T23:16:32.403962",
     "log": "",
     "correctness": {
-      "max_relative_error": 29.399822235107422,
-      "max_absolute_error": 0.01171875,
+      "max_relative_error": 4.999663829803467,
+      "max_absolute_error": 0.0078125,
       "extra": null
     },
-    "performance": null
+    "performance": {
+      "latency_ms": 0.26536068858728296,
+      "reference_latency_ms": 7.617916425069173,
+      "speedup_factor": 28.707780589601057
+    }
   }
 }

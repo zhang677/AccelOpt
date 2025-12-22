@@ -21,7 +21,7 @@ class UserPromptConfig(BaseModel):
     breadth: int = 0
 
 class PlannerResponse(BaseModel):
-    candidate_solution_path: str
+    baseline_solution_path: str
     reasonings: List[str]
     plans: List[str]
 
@@ -97,7 +97,7 @@ async def single_query(single_record, agent, user_prompt_config: UserPromptConfi
                 reasonings.append(reasoning)
                 plans.append(plan)
         return PlannerResponse(
-            candidate_solution_path=single_record["solution_path"],
+            baseline_solution_path=single_record["solution_path"],
             reasonings=reasonings,
             plans=plans
         )

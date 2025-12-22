@@ -25,7 +25,7 @@
         "cuda": "12.8"
       }
     },
-    "timestamp": "2025-12-21T01:01:14.891213",
+    "timestamp": "2025-12-21T23:15:32.837447",
     "log": "",
     "correctness": {
       "max_relative_error": 0.0,
@@ -33,9 +33,9 @@
       "extra": null
     },
     "performance": {
-      "latency_ms": 3.275337700616746,
-      "reference_latency_ms": 2.5821108177856162,
-      "speedup_factor": 0.7883494936413442
+      "latency_ms": 3.294115999009874,
+      "reference_latency_ms": 2.6097905568376127,
+      "speedup_factor": 0.7922582439786723
     }
   }
 }

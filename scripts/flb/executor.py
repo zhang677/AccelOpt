@@ -2,9 +2,6 @@
 
 import os
 import json
-import tempfile
-import traceback
-import contextlib
 import logging
 from datetime import datetime, timezone
 import multiprocessing as mp
@@ -14,7 +11,7 @@ import pandas as pd
 from pydantic import BaseModel
 import logfire
 from accelopt.utils import extract_first_code, retry_runner_safer
-from accelopt.flb_wrapper import FlashInferKernel, format_definition
+from accelopt.flb_wrapper import FlashInferKernel, format_definition, get_unique_trace_name
 from flashinfer_bench import Solution, Definition, Trace
 from flashinfer_bench.data import load_json_file, save_json_file
 from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel, set_tracing_disabled, RunConfig, ModelSettings
@@ -27,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ExecutorPromptConfig(BaseModel):
     definition_path: str = ""
     workload_path: str = ""
-    candidate_solution_path: str = ""
+    baseline_solution_path: str = ""
     user_template_path: str = ""
     optimization_plan: str = ""
     save_fields: list[str] = []
@@ -37,8 +34,8 @@ class ExecutorConfig(BaseModel):
     service_name: str = ""
     definition_path: str = ""
     workload_path: str = ""
-    candidate_solution_path: str = ""
-    candidate_trace_path: str = ""
+    baseline_solution_path: str = ""
+    baseline_trace_path: str = ""
     optimization_plan: str = ""
     num_samples: int = 4
     user_template_path: str = ""
@@ -47,7 +44,7 @@ class ExecutorConfig(BaseModel):
 # -------------------------- Helpers --------------------------
 def construct_executor_prompt(config: ExecutorPromptConfig) -> str:
     definition = load_json_file(Definition, config.definition_path)
-    solution = load_json_file(Solution, config.candidate_solution_path)
+    solution = load_json_file(Solution, config.baseline_solution_path)
     with open(config.user_template_path, "r") as f:
         prompt_template = f.read()
     user_prompt = (
@@ -107,21 +104,15 @@ async def stage1_gather_proposals(service_name: str, pconfig: ExecutorPromptConf
 def stage2_profile_and_collect(
     proposals: list[dict],
     case_config: ExecutorConfig,
-    base_spec: dict,
     per_profile_timeout: int = 900
 ):
     results = []
     for prop_id, prop in enumerate(proposals):
-        name, result, code = prop["name"], prop["result"], prop["code"]
-
-        spec = {
-            "plan": case_config.optimization_plan,
-            "new_kernel_code": code,
-        }
-
+        name, code = prop["name"], prop["code"]
+        bl = load_json_file(Trace, case_config.baseline_trace_path).evaluation.performance.latency_ms
         try:
             start = time.monotonic()
-            print(f"[Stage2] START name={name} case={base_spec['case_name']} timeout={per_profile_timeout}s")
+            print(f"[Stage2] START name={name} timeout={per_profile_timeout}s")
             kernel = FlashInferKernel(
                 traceset_root=case_config.traceset_root,
                 definition_path=case_config.definition_path
@@ -146,16 +137,20 @@ def stage2_profile_and_collect(
                 case_config.traceset_root,
                 "traces",
                 kernel.definition.op_type,
-                os.path.basename(new_solution_path)
+                get_unique_trace_name(
+                    load_json_file(Solution, new_solution_path),
+                    load_json_file(Trace, case_config.workload_path),
+                ) + ".json"
             )
             save_json_file(profile_trace, profile_trace_path)
             record_result = {
                 "definition_path": case_config.definition_path,
                 "workload_path": case_config.workload_path,
-                "candidate_solution_path": case_config.candidate_solution_path,
-                "candidate_trace_path": case_config.candidate_trace_path,
+                "baseline_solution_path": case_config.baseline_solution_path,
+                "baseline_trace_path": case_config.baseline_trace_path,
                 "solution_path": new_solution_path,
                 "trace_path": profile_trace_path,
+                "baseline_latency": bl,
             }
 
             # Check if there were errors
@@ -172,28 +167,29 @@ def stage2_profile_and_collect(
                 metadata = kp.metadata
                 record_result["latency"] = metadata.get("latency")
                 
-                bl = load_json_file(Trace, case_config.candidate_trace_path).evaluation.performance.latency_ms
+                
                 cl = metadata.get("latency")
                 if bl and cl:
                     record_result["speedup"] = bl / cl
                 else:
                     record_result["speedup"] = None
             elapsed = time.monotonic() - start
-            print(f"[Stage2] END name={name} case={base_spec['case_name']} elapsed={elapsed}s")
+            print(f"[Stage2] END name={name} elapsed={elapsed}s")
             results.append(record_result)
             if record_result.get("error", None) and "Hard timeout" in record_result["error"]:
-                print(f"[Stage2] BREAK name={name} case={base_spec['case_name']} elapsed={elapsed}s")
+                print(f"[Stage2] BREAK name={name} elapsed={elapsed}s")
                 break
         except Exception as e:
             logger.error(f"[Profile Error] {name}: {e}")
             error_result = {
-                "error": str(e),
                 "definition_path": case_config.definition_path,
                 "workload_path": case_config.workload_path,
-                "candidate_solution_path": case_config.candidate_solution_path,
-                "candidate_trace_path": case_config.candidate_trace_path,
+                "baseline_solution_path": case_config.baseline_solution_path,
+                "baseline_trace_path": case_config.baseline_trace_path,
                 "solution_path": new_solution_path,
                 "trace_path": profile_trace_path,
+                "error": str(e),
+                "baseline_latency": bl
             }
             results.append(error_result)
     
@@ -202,13 +198,12 @@ def stage2_profile_and_collect(
 # ---------- main(): orchestrates proposal generation and profiling ----------
 async def process_single_service_plan(
     case_config: ExecutorConfig, 
-    model: OpenAIChatCompletionsModel,
-    base_spec: dict
+    model: OpenAIChatCompletionsModel
 ):
     pconfig = ExecutorPromptConfig(
         definition_path=case_config.definition_path,
         workload_path=case_config.workload_path,
-        candidate_solution_path=case_config.candidate_solution_path,
+        baseline_solution_path=case_config.baseline_solution_path,
         user_template_path=case_config.user_template_path,
         optimization_plan=case_config.optimization_plan,
         save_fields=case_config.save_fields,
@@ -219,7 +214,7 @@ async def process_single_service_plan(
     proposals = await stage1_gather_proposals(case_config.service_name, pconfig, agent, case_config.num_samples)
     
     # 2) Sequential profiling with result collection
-    results = stage2_profile_and_collect(proposals, case_config, base_spec, per_profile_timeout=180)
+    results = stage2_profile_and_collect(proposals, case_config, per_profile_timeout=180)
     
     return results
 
@@ -260,21 +255,15 @@ async def main(args):
 
     # iterate services
     for _, row in problems.iterrows():
-        candidate_solution_path = row["solution_path"]
-        logfire_service_name = load_json_file(Solution, candidate_solution_path).name
+        baseline_solution_path = row["solution_path"]
+        logfire_service_name = load_json_file(Solution, baseline_solution_path).name
         logfire.configure(service_name=logfire_service_name)
         logfire.instrument_openai()
-        plans = next(item["plans"] for item in extractor_output_list if item["candidate_solution_path"] == candidate_solution_path)
+        plans = next(item["plans"] for item in extractor_output_list if item["baseline_solution_path"] == baseline_solution_path)
         # profile baseline once per service (blocking)
 
-        base_spec = {
-            "definition_path": row["definition_path"],
-            "workload_path": row["workload_path"],
-            "candidate_solution_path": candidate_solution_path
-        }
-
-        single_dict = {"candidate_solution_path": candidate_solution_path, "workload_path": row["workload_path"]}
-        logfire_service_name = load_json_file(Solution, candidate_solution_path).name
+        single_dict = {"baseline_solution_path": baseline_solution_path, "workload_path": row["workload_path"]}
+        logfire_service_name = load_json_file(Solution, baseline_solution_path).name
         for i in range(len(plans)):
             plan = plans[i]
             case_config = ExecutorConfig(
@@ -283,8 +272,8 @@ async def main(args):
                 optimization_plan=plan,
                 definition_path=row["definition_path"],
                 workload_path=row["workload_path"],
-                candidate_solution_path=candidate_solution_path,
-                candidate_trace_path=row["trace_path"],
+                baseline_solution_path=baseline_solution_path,
+                baseline_trace_path=row["trace_path"],
                 num_samples=args.num_samples,
                 user_template_path=args.user_template_path,
                 save_fields=save_fields,
@@ -292,7 +281,7 @@ async def main(args):
             )
             
             plan_results = await asyncio.wait_for(
-                process_single_service_plan(case_config, model, base_spec), 
+                process_single_service_plan(case_config, model), 
                 timeout=7200
             )
             

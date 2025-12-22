@@ -25,17 +25,17 @@
         "cuda": "12.8"
       }
     },
-    "timestamp": "2025-12-21T01:05:15.434641",
+    "timestamp": "2025-12-21T23:19:22.868584",
     "log": "",
     "correctness": {
-      "max_relative_error": 0.0078125,
-      "max_absolute_error": 0.015625,
+      "max_relative_error": 0.007692307699471712,
+      "max_absolute_error": 0.03125,
       "extra": null
     },
     "performance": {
-      "latency_ms": 0.3190269630862652,
-      "reference_latency_ms": 1.1171319630087877,
-      "speedup_factor": 3.5016850995967825
+      "latency_ms": 0.319212449932537,
+      "reference_latency_ms": 1.1159323502362257,
+      "speedup_factor": 3.4958923139497506
     }
   }
 }

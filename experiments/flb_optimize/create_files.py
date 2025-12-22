@@ -19,7 +19,7 @@ output_table = []
 for trace in selected_traces:
     workload = trace.workload
     trace_definition = traceset.definitions[trace.definition]
-    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}.json"
+    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}_{trace.workload.uuid[:8]}.json"
     workload_trace = Trace(
         definition=trace.definition,
         workload=workload,

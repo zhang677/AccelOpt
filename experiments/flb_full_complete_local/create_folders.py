@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--project_name", type=str, required=True)
 parser.add_argument("--org_name", type=str, required=True)
 parser.add_argument("--exp_date_base", type=str, required=True)
+parser.add_argument("--traceset_root", type=str, required=True)
 args = parser.parse_args()
 project_name = args.project_name
 org_name = args.org_name
@@ -80,5 +81,6 @@ for index, row in proxy_problem_list_df.iterrows():
         content = content.replace("$5", f"\"{org_name}\"")
         content = content.replace("$6", str(ITERS))
         content = content.replace("$7", str(BREADTH))
+        content = content.replace("$8", f"\"{args.traceset_root}\"")
         with open(cur_single_loop_exec_path, "w") as f:
             f.write(content)

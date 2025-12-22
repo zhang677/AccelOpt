@@ -1,5 +1,5 @@
-from accelopt.flb_wrapper import FlashInferKernel
-from flashinfer_bench import Definition
+from accelopt.flb_wrapper import FlashInferKernel, get_unique_trace_name
+from flashinfer_bench import Definition, Solution, Trace
 from flashinfer_bench.data import save_json_file, load_json_file
 from pathlib import Path
 import pandas as pd
@@ -22,7 +22,9 @@ def main():
             profile_baseline=True
         )
         definition = load_json_file(Definition, def_path)
-        output_trace_path = output_base_path / "traces" / definition.op_type / Path(solution_path).name
+        solution = load_json_file(Solution, solution_path)
+        workload = load_json_file(Trace, workload_path)
+        output_trace_path = output_base_path / "traces" / definition.op_type / (get_unique_trace_name(solution, workload) + ".json")
         save_json_file(trace, output_trace_path)
         output_rows.append({
             **row,
