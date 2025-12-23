@@ -4,8 +4,10 @@ from flashinfer_bench.data import save_json_file, load_json_file
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
+import os
 
 def main():
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     selected_traces_df = pd.read_csv("/home/ubuntu/AccelOpt/experiments/flb_optimize/partial_selected_traces_triton.csv")
     traceset_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
     output_base_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize")
@@ -19,7 +21,8 @@ def main():
             solution_path,
             workload_path=workload_path,
             timeout_seconds=300,
-            profile_baseline=True
+            profile_baseline=True,
+            use_isolated_runner=True
         )
         definition = load_json_file(Definition, def_path)
         solution = load_json_file(Solution, solution_path)

@@ -124,7 +124,7 @@ def stage2_profile_and_collect(
                 author="AccelOpt",
                 language="triton",
                 target_gpu="H100",
-                name=uuid.uuid4().hex, # Filename has to be less than 255 characters
+                name=uuid.uuid4().hex, # Filename has to have fewer than 255 characters
                 description=f"{case_config.service_name}_{prop_id}"
             )
             profile_trace, kp = kernel.profile(
@@ -249,7 +249,7 @@ async def main(args):
     set_tracing_disabled(disabled=True)
 
     # pin visible core
-    mp.set_start_method("spawn", force=True)
+    # mp.set_start_method("spawn", force=True)
 
     # Collect all results
     output_list = []

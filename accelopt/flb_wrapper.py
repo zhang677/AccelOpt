@@ -84,7 +84,7 @@ class FlashInferKernel:
         )
         cfg = BenchmarkConfig()
         cfg.profile_baseline = kwargs.get("profile_baseline", False)
-        cfg.use_isolated_runner = kwargs.get("use_isolated_runner", False)
+        cfg.use_isolated_runner = kwargs.get("use_isolated_runner", True) # The FlashInferKernel abstraction assumes a isolated runner
         cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
         benchmark = Benchmark(temp_traceset, cfg)
         result_traceset = benchmark.run_all()
