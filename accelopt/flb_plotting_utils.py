@@ -50,6 +50,7 @@ def get_latency_dict(record: dict, max_plans: int = None, max_sample_id: int = N
             d[(service_name, k)] = {
                 "latency": v["latency"],
                 "trace_path": v["trace_path"],
+                "solution_path": v["solution_path"],
                 "plan_id": k
             }
     return d
@@ -85,10 +86,13 @@ def calc_best_metadata_for_file(executor_results_json: str, baseline_latency: fl
             sp = baseline_latency / lat["latency"]
             if sp > best:
                 best = sp
-                best_metadata = lat["trace_path"]
+                best_metadata = {
+                    "trace_path": lat["trace_path"],
+                    "solution_path": lat["solution_path"]
+                }
                 best_plan_key = item_key
     
-    return (best, best_metadata, best_plan_key) if best > 0 else (0.0, None, None)
+    return (best, best_metadata, best_plan_key) if best > 0 else (0.0, {}, None)
 
 def series_from_with_metadata(base_dir: str, dates: List[str], case_name: str, 
                 baseline_latency: float, key_name: str, max_candidates: int = None, max_plans: int = None, max_sample_id: int = None) -> Tuple[List[float], List[Optional[Tuple[str, str]]]]:

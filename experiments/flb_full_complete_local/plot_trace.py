@@ -12,9 +12,9 @@ from flashinfer_bench.data import load_json_file
 from accelopt.flb_wrapper import get_unique_trace_name
 from pathlib import Path
 
-
-exp_base_dir = "../checkpoints/12-21-17-05"
-output_path = "./results/12171705.png"
+exp_base_date = "12-21-17-05"
+exp_base_dir = f"../checkpoints/{exp_base_date}"
+output_path = f"./results/{exp_base_date}/{exp_base_date.replace('-', '')}.png"
 baseline_result_path = "profile_results.csv"
 exp_title = "TopK=8, ExpN=16, B=2, N=4, K=2, T=16, gpt-oss-120b, gpt-oss-120b"
 # Load baseline
@@ -34,7 +34,7 @@ for ax, (baseline_solution_path, workload_path, baseline_trace_path) in zip(axes
     solution = load_json_file(Solution, baseline_solution_path)
     exp_dir = os.path.join(exp_base_dir, get_unique_trace_name(solution, workload))
     exp_dates = get_exp_dates(exp_dir)
-    exp_vals, exp_trace_paths, exp_best_plan_keys = series_from_with_metadata(exp_dir, exp_dates, workload_path, baseline_latency, "workload_path")
+    exp_vals, exp_metadatas, exp_best_plan_keys = series_from_with_metadata(exp_dir, exp_dates, workload_path, baseline_latency, "workload_path")
     avg_good_speedup = get_avg_good_speedup(exp_dir, exp_dates, workload_path, baseline_latency, "workload_path")
     
     max_len = max(len(exp_vals), 1)
@@ -79,11 +79,13 @@ for ax, (baseline_solution_path, workload_path, baseline_trace_path) in zip(axes
             "iter": best_idx,
             "plan_id": exp_best_plan_keys[best_idx],
             "exp_date": exp_dates[best_idx],
-            "trace_path": exp_trace_paths[best_idx],
+            "trace_path": exp_metadatas[best_idx].get("trace_path", None),
+            "solution_path": exp_metadatas[best_idx].get("solution_path", None),
             "best_speedup": best_val,
         })
 
     for i, pid in enumerate(exp_best_plan_keys):
+        print(pid)
         plan_id_rows.append({
             "baseline_trace_path": baseline_trace_path,
             "experiment": exp_title,
@@ -92,7 +94,8 @@ for ax, (baseline_solution_path, workload_path, baseline_trace_path) in zip(axes
             "exp_date": exp_dates[i],
             "best_speedup": exp_vals[i],
             "avg_good_speedup": avg_good_speedup[i],
-            "trace_path": exp_trace_paths[i],
+            "trace_path": exp_metadatas[i].get("trace_path", None),
+            "solution_path": exp_metadatas[i].get("solution_path", None)
         })
 
 # ---------- Plan ID tables ----------

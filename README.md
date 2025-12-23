@@ -12,12 +12,12 @@ knowledge. AccelOpt explores the kernel optimization space through iterative gen
 optimization memory that curates experiences and insights from previously encountered slow-fast kernel pairs.
 
 ## Setup
-### Trainium Machines
+### Trainium 
+#### Machines
 EC2 Instance: trn1.32xlarge
 
 AMI: Deep Learning AMI Neuron (Ubuntu 22.04)
-
-### Install
+#### Install
 ```
 source /opt/aws_neuronx_venv_pytorch_2_7/bin/activate # Check the PyTorch version of your AMI
 pip install logfire
@@ -26,9 +26,29 @@ git clone git@github.com:zhang677/AccelOpt.git
 cd AccelOpt
 python setup.py install
 ```
+#### Run
+`experiments/full_complete_local` shows how to run AccelOpt on NKIBench with a local served gpt-oss-120b.
 
-## Run
-`experiments/full_complete_local` shows how to run AccelOpt with a local served gpt-oss-120b.
+
+### NVIDIA GPU 
+#### Machines
+EC2 Instance: p5.48xlarge
+
+AMI: Deep Learning AMI Neuron (Ubuntu 22.04)
+#### Install
+```
+# Create a PyTorch environment first
+pip install logfire
+pip install openai-agents
+https://github.com/zhang677/flashinfer-bench # A necesssary feature hasn't been merged to the main branch
+cd flashinfer-bench
+pip install -v -e .
+git clone git@github.com:zhang677/AccelOpt.git
+cd AccelOpt
+python setup.py install
+```
+#### Run
+`experiments/flb_full_complete_local` shows how to run AccelOpt on [FlashInfer-Bench](https://github.com/flashinfer-ai/flashinfer-bench) with a local served gpt-oss-120b.
 
 # NKIBench: Kernel Benchmark for AWS Trainium accelerators
 
