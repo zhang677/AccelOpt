@@ -5,12 +5,17 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 import os
+import argparse
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--exp_date_base", type=str, required=True)
+    args = parser.parse_args()
+
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     selected_traces_df = pd.read_csv("/home/ubuntu/AccelOpt/experiments/flb_optimize/partial_selected_traces_triton.csv")
     traceset_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
-    output_base_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize")
+    output_base_path = Path(f"../checkpoints/{args.exp_date_base}")
     output_rows = []
     for index, row in tqdm(selected_traces_df.iterrows()):
         def_path = row["definition_path"]
@@ -35,7 +40,7 @@ def main():
         })
 
     output_df = pd.DataFrame(output_rows)
-    output_df.to_csv(output_base_path / "partial_profiled_baselines.csv", index=False)
+    output_df.to_csv(output_base_path / f"profiled_baselines_{args.exp_date_base}.csv", index=False)
 
 
 if __name__ == "__main__":

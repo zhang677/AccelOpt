@@ -57,7 +57,7 @@ for index, row in proxy_profile_results_df.iterrows():
     new_exp_candidates_dir = os.path.join(new_exp_base_dir, eval_first_exp_date, "candidates")
     os.makedirs(new_exp_candidates_dir, exist_ok=False)
 
-    profile_results_df = proxy_profile_results_df[proxy_profile_results_df["solution_path"] == row["solution_path"]]
+    profile_results_df = proxy_profile_results_df[proxy_profile_results_df["solution_path"] == row["solution_path"]] # Intent: workload_paths are unique in the same worker (Unsure if this is good)
     profile_results_df.to_csv(os.path.join(new_exp_candidates_dir, "profile_results.csv"), index=False)
 
     cur_single_loop_exec_path = os.path.join(exp_base_dir, f"run_single_loop_{service_name}.sh")

@@ -1,5 +1,6 @@
 from flashinfer_bench import TraceSet, Trace
 from flashinfer_bench.data import load_jsonl_file, save_json_file
+from accelopt.flb_wrapper import get_workload_stem_name
 from pathlib import Path
 import pandas as pd
 def find_first(list, predicate):
@@ -15,11 +16,12 @@ traceset = TraceSet.from_path(traceset_path)
 selected_json_path = Path("/home/ubuntu/AccelOpt/experiments/flb_optimize/partial_selected_traces_triton.jsonl")
 selected_traces = load_jsonl_file(Trace, selected_json_path)
 output_table = []
-# Create workloads
+
 for trace in selected_traces:
+    # Create workloads
     workload = trace.workload
     trace_definition = traceset.definitions[trace.definition]
-    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{trace.definition}_{trace.workload.uuid[:8]}.json"
+    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{get_workload_stem_name(workload)}.json"
     workload_trace = Trace(
         definition=trace.definition,
         workload=workload,
@@ -27,7 +29,6 @@ for trace in selected_traces:
     save_json_file(workload_trace, workload_path)
 
     # Create solutions
-
     partial_solution = trace.solution
     solution = find_first(traceset.solutions[trace.definition], lambda x: x.name == partial_solution)
     assert solution is not None

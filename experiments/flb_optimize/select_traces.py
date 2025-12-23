@@ -21,8 +21,8 @@ for definition_name in all_traces.keys():
 
 selected_workloads = {}
 for definition_name, workload_map in trace_map.items():
-# The first workload whose baseline latency is larger than 20ms. If not found, select the one with largest baseline latency
-    # Sort by baseline latency
+    # The first workload whose latency is larger than 10ms. If not found, select the one with largest latency
+    # Sort by latency
     sorted_workloads = sorted(workload_map.items(), key=lambda x: x[1].latency_ms)
     for workload, evaluation in sorted_workloads:
         if evaluation.latency_ms > 10:
@@ -34,8 +34,7 @@ for definition_name, workload_map in trace_map.items():
         selected_evaluation = sorted_workloads[-1][1]
     selected_workload = find_first(traceset.workloads[definition_name], lambda x: x.workload.uuid == selected_workload_uuid)
     selected_workloads[definition_name] = {
-        "workload": selected_workload,
-        "evaluation": selected_evaluation
+        "workload": selected_workload
     }
 
     print(definition_name, selected_workload, selected_evaluation.latency_ms)

@@ -54,6 +54,7 @@ for index, row in proxy_profile_results_df.iterrows():
 
     with open(os.path.join(new_exp_base_dir, "log.txt"), "r") as f:
         eval_first_exp_date = f.readlines()[-1].strip()
+        num_finished_exps = len(f.readlines())
     new_exp_config_dir = os.path.join(new_exp_base_dir, "configs")
     eval_prefix = f"eval-{index}-{exp_date_base}"
 
@@ -72,7 +73,7 @@ for index, row in proxy_profile_results_df.iterrows():
         content = content.replace("$3", f"\"{eval_prefix}\"")
         content = content.replace("$4", f"\"{project_name}\"")
         content = content.replace("$5", f"\"{org_name}\"")
-        content = content.replace("$6", str(ITERS))
+        content = content.replace("$6", str(ITERS + 1 - num_finished_exps))
         content = content.replace("$7", str(BREADTH))
         content = content.replace("$8", f"\"{args.traceset_root}\"")
         with open(cur_single_loop_exec_path, "w") as f:

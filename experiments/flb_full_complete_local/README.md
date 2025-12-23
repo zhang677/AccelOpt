@@ -5,14 +5,15 @@ python create_folders.py --project_name 08010918 \
     --exp_date_base 12-21-17-05 \
     --traceset_root /home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints
 
+rm -rf /home/ubuntu/AccelOpt/experiments/checkpoints/12-21-17-05
+
+python clean_checkpoints.py --chkpt_path /home/ubuntu/AccelOpt/experiments/checkpoints/12-21-17-05
+
+# Run clean_checkpoints.py before resume_folders!!
 python resume_folders.py --project_name 08010918 \
     --org_name zhang677 \
     --exp_date_base 12-21-17-05 \
     --traceset_root /home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints
-
-rm -rf /home/ubuntu/AccelOpt/experiments/checkpoints/12-21-17-05
-
-python clean_checkpoints.py --chkpt_path /home/ubuntu/AccelOpt/experiments/checkpoints/12-21-17-05
 
 PCIe or SXM (HGX): nvidia-smi -q
 
@@ -25,6 +26,9 @@ Observations:
 ~~3. Where does "Unknown error" come from?~~
 3. Investigate the plans
 4. Why only 1 GPU is used? => Add cuda device var (only 8 kernels?) [TODO] Decide which 8 cases to use after the initial experiments 12-21-17-05
+~~5. [TODO] Add a script that collects the best latency from executor_results.json~~
+6. Create the baseline folder under experiments (12-21-17-05 is special. In the future experiments, the baseline traces will be in the checkpoint folder instead of flb_optimize)
+7. Investigate the best kernels of 12-21-17-05
 
 gemm_n28672_k4096_32cd2698
 M = 8192

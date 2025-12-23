@@ -1,4 +1,4 @@
-Optimize the workloads with baseline ~20ms; Collect the correct triton implementations
+Selection criteria: a relatively heavy workload of the same definition and select the fastest triton implementation in flashinfer-bench (2025-12-20)
 
 ```
 python select_traces.py
