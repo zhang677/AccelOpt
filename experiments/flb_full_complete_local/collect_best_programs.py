@@ -2,6 +2,7 @@ import pandas as pd
 from flashinfer_bench import Solution, Trace
 from flashinfer_bench.data import load_json_file
 from accelopt.flb_wrapper import get_unique_trace_name
+import shutil
 
 def float_to_str(f: float) -> str:
     return f"{f:.3f}".replace(".", "dot")
@@ -32,3 +33,9 @@ for index, row in profile_results_df.iterrows():
 
     with open(f"./results/{exp_base_date}/{unique_trace_name}_best_{float_to_str(opt_latency)}.py", "w") as f:
         f.write(best_code)
+
+    # cp "solution_path" to ./results/{exp_base_date}/{unique_trace_name}_solution.json
+    shutil.copyfile(
+        matching_rows.iloc[0]["solution_path"],
+        f"./results/{exp_base_date}/{unique_trace_name}_solution.json"
+    )
