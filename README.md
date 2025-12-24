@@ -1,4 +1,4 @@
- <div align="center">
+<div align="center">
     <img src="img/main-method.png" alt="Method" style="width:85%;">
 </div> 
 
@@ -43,6 +43,7 @@ pip install openai-agents
 https://github.com/zhang677/flashinfer-bench # A necesssary feature hasn't been merged to the main branch
 cd flashinfer-bench
 pip install -v -e .
+cd ..
 git clone git@github.com:zhang677/AccelOpt.git
 cd AccelOpt
 python setup.py install
@@ -70,7 +71,16 @@ result = nki_kernel.profile(save_fields)
 
 NKIBench estimates the best achievable performance offered by the Trainium hardware, which offers additional insights on how effective AccelOpt has been in exploring the entire optimization landscape. The best achievable performance is calculated in `experiments/full_complete_local/calculate_percentage_of_peak.py`
 
+# Result
+<div align="center">
+    <img src="img/ratio_bars_trn1.png" alt="TRN1-result" style="width:85%;">
+</div>
+Per-task kernel improvement achieved using Claude Sonnet 4 and AccelOpt (gpt-oss-120b + Qwen3-Coder-480B) on Trainium 1.
 
+<div align="center">
+    <img src="img/12211705_latency_comparison.png" alt="TRN1-result" style="width:75%;">
+</div>
+Triton kernel improvement achieved using AccelOpt (gpt-oss-120b) on H100 SXM5 over the best (2025-12-23) across all 9 categories with Triton baselines.
 
 # Citation
 
