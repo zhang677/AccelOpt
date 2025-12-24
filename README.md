@@ -5,6 +5,7 @@
 # AccelOpt: Self-improving Agents for AI Accelerator Kernel Optimization
 
 [![arXiv](https://img.shields.io/badge/arXiv-2511.15915-b31b1b.svg)](https://arxiv.org/pdf/2511.15915)
+[![Blog Post](https://img.shields.io/badge/Blog-github.io-blue)](https://zhang677.github.io/blog_md/accelopt.html)
 
 AccelOpt is a self-improving large language model (LLM) agentic system that autonomously optimizes
 kernels for emerging AI acclerators, eliminating the need for expert-provided hardware-specific optimization
