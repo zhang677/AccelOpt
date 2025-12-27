@@ -158,12 +158,24 @@ Here is some information about Triton:
 Returns the matrix product of two blocks. The two blocks must both be two-dimensional or three-dimensional and have compatible inner dimensions. For three-dimensional blocks, tl.dot performs the batched matrix product, where the first dimension of each block represents the batch dimension.
 
 Parameters:
-- input (2D or 3D tensor of scalar-type in {int8, float8_e5m2, float16, bfloat16, float32})  The first tensor to be multiplied.
-- other (2D or 3D tensor of scalar-type in {int8, float8_e5m2, float16, bfloat16, float32})  The second tensor to be multiplied.
-
-- acc (2D or 3D tensor of scalar-type in {float16, float32, int32})  The accumulator tensor. If not None, the result is added to this tensor.
+- input (2D or 3D tensor of scalar-type in {int8, float8_e5m2, float16, bfloat16, float32}) – The first tensor to be multiplied.
+- other (2D or 3D tensor of scalar-type in {int8, float8_e5m2, float16, bfloat16, float32}) – The second tensor to be multiplied.
+- acc (2D or 3D tensor of scalar-type in {float16, float32, int32}) – The accumulator tensor. If not None, the result is added to this tensor.
 
 2. A parameter should be defined either inside the @triton.autotune configuration or as a keyword argument of the kernel. Make sure that you don't re-define auto-tuned symbols.
+```
+@triton.autotune(configs=[
+    triton.Config(kwargs={'BLOCK_SIZE': 128}, num_warps=4),
+    triton.Config(kwargs={'BLOCK_SIZE': 1024}, num_warps=8),
+  ],
+  key=['x_size'] # the two above configs will be evaluated anytime the value of x_size changes
+)
+@triton.jit
+def kernel(x_ptr, x_size, BLOCK_SIZE: tl.constexpr):
+  ...
+# When you call the kernel, don't pass BLOCK_SIZE as an argument
+kernel[grid](x_ptr, x_size)
+```
 
 3. Triton doesn't support slice indexing on local accumulators. Therefore, you could use tl.where to nullify or select specific elements and perform operations on the entire tensor.
 Example: If you want to zero out the second half of a row:
@@ -175,6 +187,10 @@ mask = cols < (BLOCK_SIZE // 2)
 # Simulate slicing x[:BLOCK_SIZE//2] by zeroing the rest
 sliced_x = tl.where(mask, x, 0.0)
 ```
+
+4. The start and end must be a power of two in triton.language.arange(start, end)
+
+5. There are no explicit shared memory management Triton APIs. The compiler manages shared memory. 
 """
     agent = Agent(name=name, instructions=fixer_system_prompt, model=model)
     code = await fix_once(name, log, error_code, agent)
@@ -188,7 +204,7 @@ async def stage2_profile_and_collect(
     per_profile_timeout: int = 900
 ):
     results = []
-    num_fixed_iters = 5
+    num_fixed_iters = 4
     
     bl = load_json_file(Trace, case_config.baseline_trace_path).evaluation.performance.latency_ms
     for prop_id, prop in enumerate(proposals):
