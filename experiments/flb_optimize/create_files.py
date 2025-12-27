@@ -19,12 +19,11 @@ output_table = []
 
 for trace in selected_traces:
     # Create workloads
-    workload = trace.workload
     trace_definition = traceset.definitions[trace.definition]
-    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{get_workload_stem_name(workload)}.json"
+    workload_path = output_base_path / "workloads" / trace_definition.op_type / f"{get_workload_stem_name(trace)}.json"
     workload_trace = Trace(
         definition=trace.definition,
-        workload=workload,
+        workload=trace.workload,
     )
     save_json_file(workload_trace, workload_path)
 

@@ -1,0 +1,29 @@
+EXP_BASE_DIR=$1
+INIT_EXP_DATE=$2
+EXP_DATE_PREFIX=$3
+PROJECT_NAME=$4
+EXPERIENCE_LIST_PATH="$ACCELOPT_BASE_DIR/prompts/empty_rewrites.json"
+ORG_NAME=$5
+ITERS=$6
+BREADTH=$7
+TRACESET_ROOT=$8
+TOPK_CANDIDATES=$10
+NUM_SAMPLES=$11
+MAX_THRESHOLD=$12
+MIN_THRESHOLD=$13
+TOPK=$14
+EXP_N=$15
+
+
+LAST_EXP_DATE=$INIT_EXP_DATE
+for i in $(seq 1 $ITERS); do
+    # Get the current exp date from time using Pacific time
+    CURRENT_EXP_DATE="$EXP_DATE_PREFIX-$(TZ='America/Los_Angeles' date +%m-%d-%H-%M)"
+    echo "$CURRENT_EXP_DATE" >> "$EXP_BASE_DIR/log.txt"
+    EXPERIENCE_LIST_PATH="$EXP_BASE_DIR/$LAST_EXP_DATE/rewrites/aggregated_rewrites_list.json"
+    mkdir -p $EXP_BASE_DIR/$CURRENT_EXP_DATE
+    $ACCELOPT_BASE_DIR/templates/flb/complete_fixer_local/run_init.sh $CURRENT_EXP_DATE $LAST_EXP_DATE $EXP_BASE_DIR $PROJECT_NAME $ORG_NAME
+    $ACCELOPT_BASE_DIR/templates/flb/complete_fixer_local/run_accum_rewrites.sh $CURRENT_EXP_DATE $EXP_BASE_DIR $MAX_THRESHOLD $MIN_THRESHOLD $TOPK $TOPK_CANDIDATES $PROJECT_NAME $ORG_NAME
+    $ACCELOPT_BASE_DIR/templates/flb/complete_fixer_local/run_body.sh $CURRENT_EXP_DATE $EXP_BASE_DIR $EXPERIENCE_LIST_PATH $BREADTH $NUM_SAMPLES $EXP_N $PROJECT_NAME $ORG_NAME $TRACESET_ROOT
+    LAST_EXP_DATE=$CURRENT_EXP_DATE
+done

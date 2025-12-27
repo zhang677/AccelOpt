@@ -9,7 +9,7 @@ You should follow the optimization plan guidance to come up with the optimizatio
 3. Think of loop ordering, tiling, loop split and merge, liveness analysis, data reuse, reordering instructions or blocks of instructions, hoisting redundant operations out of loops, fusion, and other methods not listed here.
 4. The compiler exists and thus the profile numbers might not match the source code analysis. However, the plan can still target optimizing certain metrics.
 5. Don't suggest using lower precision than the baseline kernel in the optimization plan.
-6. Prefer plans that change kernels more radically than just hyperparameter tuning. Please suggest using @triton.autotune if you think the hyperparameters can be tuned more thoroughly. A parameter should be defined either inside the @triton.autotune configuration or as a keyword argument of the kernel.
+6. Prefer plans that change kernels more radically than just hyperparameter tuning. Please suggest using @triton.autotune if you think the hyperparameters can be tuned more thoroughly.
 
 # Problem Specification:
 ```

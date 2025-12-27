@@ -1,4 +1,3 @@
-# Workload criteria: The first workload whose baseline latency is larger than 20ms. If not found, select the one with largest baseline latency
 # Input: TraceSet root
 # Output: A map from workload per definition to baseline latency
 from flashinfer_bench import TraceSet, EvaluationStatus, SupportedLanguages

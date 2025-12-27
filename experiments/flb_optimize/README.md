@@ -20,3 +20,5 @@ workload_path: Trace (task)
 trace_path: Trace (profile)
 
 Leave the displayed_profiles_path for the future ncu integration
+
+Current run_single_loop_xxx.sh still needs manual setting of CUDA_VISIBLE_DEVICES
