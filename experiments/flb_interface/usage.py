@@ -173,9 +173,8 @@ if __name__ == "__main__":
     
     # Profile baseline kernel
     definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/gemm/gemm_n28672_k4096.json"
-    # workload_path = "/home/ubuntu/flashinfer-trace/workloads/gemm/gemm_n128_k2048.jsonl"
-    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/gemm/gemm_n28672_k4096.jsonl"
-    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/gemm/gemm_n28672_k4096/claude-opus-4-1_triton_79b898.json"
+    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/gemm/gemm_n28672_k4096_32cd269.json"
+    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/gemm/gemm_n28672_k4096/gpt-o3_triton_4c9c32.json"
     baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
     baseline_res = baseline_kernel.profile(
         baseline_path,
@@ -210,4 +209,7 @@ if __name__ == "__main__":
     print(res)
 
     print(f"Solution saved to: {solution_path}")
+
+    os.remove(solution_path)
+    print(f"Solution removed: {solution_path}")
 

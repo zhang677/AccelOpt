@@ -143,6 +143,5 @@
     "model:deepseek-r1",
     "quantization:float8_e4m3fn"
   ],
-  "description": "FP8 block scale MoE operation. Routing and two grouped-GEMM included.",
-  "constraints": null
+  "description": "FP8 block scale MoE operation. Routing and two grouped-GEMM included."
 }

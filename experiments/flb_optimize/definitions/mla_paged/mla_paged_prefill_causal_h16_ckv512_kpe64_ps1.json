@@ -9,18 +9,15 @@
     },
     "head_dim_ckv": {
       "type": "const",
-      "value": 512,
-      "description": null
+      "value": 512
     },
     "head_dim_kpe": {
       "type": "const",
-      "value": 64,
-      "description": null
+      "value": 64
     },
     "page_size": {
       "type": "const",
-      "value": 1,
-      "description": null
+      "value": 1
     },
     "total_q": {
       "type": "var",
@@ -110,8 +107,7 @@
         "num_qo_heads",
         "head_dim_ckv"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "lse": {
       "shape": [

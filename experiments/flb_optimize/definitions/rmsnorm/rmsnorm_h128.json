@@ -3,13 +3,11 @@
   "op_type": "rmsnorm",
   "axes": {
     "batch_size": {
-      "type": "var",
-      "description": null
+      "type": "var"
     },
     "hidden_size": {
       "type": "const",
-      "value": 128,
-      "description": null
+      "value": 128
     }
   },
   "inputs": {
@@ -18,15 +16,13 @@
         "batch_size",
         "hidden_size"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "weight": {
       "shape": [
         "hidden_size"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     }
   },
   "outputs": {
@@ -35,8 +31,7 @@
         "batch_size",
         "hidden_size"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     }
   },
   "reference": "import torch\n\n@torch.no_grad()\ndef run(hidden_states, weight):\n    batch_size, hidden_size = hidden_states.shape\n    # Check constants\n    assert hidden_size == 128\n\n    EPS = 1e-6\n\n    x = hidden_states.to(torch.float32)\n    inv_rms = torch.rsqrt(x.pow(2).mean(dim=-1, keepdim=True) + EPS)\n    y = (x * inv_rms) * weight.to(torch.float32)\n    return y.to(hidden_states.dtype)",
@@ -44,6 +39,5 @@
     "status:verified",
     "model:qwen3-30b-a3b"
   ],
-  "description": "Root Mean Square Normalization with hidden_size=128. Captured from Qwen3-30B-A3B. Epsilon is fixed at 1e-6.",
-  "constraints": null
+  "description": "Root Mean Square Normalization with hidden_size=128. Captured from Qwen3-30B-A3B. Epsilon is fixed at 1e-6."
 }

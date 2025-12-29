@@ -4,23 +4,19 @@
   "axes": {
     "num_qo_heads": {
       "type": "const",
-      "value": 32,
-      "description": null
+      "value": 32
     },
     "num_kv_heads": {
       "type": "const",
-      "value": 8,
-      "description": null
+      "value": 8
     },
     "head_dim": {
       "type": "const",
-      "value": 128,
-      "description": null
+      "value": 128
     },
     "page_size": {
       "type": "const",
-      "value": 1,
-      "description": null
+      "value": 1
     },
     "len_indptr": {
       "type": "var",
@@ -35,8 +31,7 @@
       "description": "Total number of KV page indices."
     },
     "num_pages": {
-      "type": "var",
-      "description": null
+      "type": "var"
     }
   },
   "inputs": {
@@ -46,8 +41,7 @@
         "num_qo_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "k_cache": {
       "shape": [
@@ -56,8 +50,7 @@
         "num_kv_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "v_cache": {
       "shape": [
@@ -66,8 +59,7 @@
         "num_kv_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "qo_indptr": {
       "shape": [
@@ -103,8 +95,7 @@
         "num_qo_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "lse": {
       "shape": [

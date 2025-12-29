@@ -4,18 +4,15 @@
   "axes": {
     "num_qo_heads": {
       "type": "const",
-      "value": 32,
-      "description": null
+      "value": 32
     },
     "num_kv_heads": {
       "type": "const",
-      "value": 4,
-      "description": null
+      "value": 4
     },
     "head_dim": {
       "type": "const",
-      "value": 128,
-      "description": null
+      "value": 128
     },
     "len_indptr": {
       "type": "var",
@@ -37,8 +34,7 @@
         "num_qo_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "k": {
       "shape": [
@@ -46,8 +42,7 @@
         "num_kv_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "v": {
       "shape": [
@@ -55,8 +50,7 @@
         "num_kv_heads",
         "head_dim"
       ],
-      "dtype": "bfloat16",
-      "description": null
+      "dtype": "bfloat16"
     },
     "qo_indptr": {
       "shape": [

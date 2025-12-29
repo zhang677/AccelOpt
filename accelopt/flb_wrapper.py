@@ -75,6 +75,8 @@ class FlashInferKernel:
         definition = self.definition
         solution = load_json_file(Solution, solution_path)
         selected_workload = load_json_file(Trace, workload_path)
+        if hasattr(solution.spec, "destination_passing_style"):
+            solution.spec.destination_passing_style = kwargs.get("destination_passing_style", False)
         temp_traceset = TraceSet(
             root=self.traceset.root,
             definitions={definition.name: definition},
