@@ -58,37 +58,36 @@ async def single_query(single_record, agent, user_prompt_config: UserPromptConfi
     user_prompt = construct_user_prompt(config_copy)
     logfire.configure(service_name=single_record["service_name"])
     logfire.instrument_openai()
-    with logfire.span(single_record["service_name"]) as span:
-        if "claude" in agent.model.model.lower():
-            run_config = RunConfig(
-                model_settings=ModelSettings(
-                    temperature=1.0, # Temperature must be 1.0 for reasoning to be enabled
-                    max_tokens=20000,
-                    extra_body={
-                        "thinking": {
-                            "type": "enabled",
-                            "budget_tokens": 10000
-                        }
+    if "claude" in agent.model.model.lower():
+        run_config = RunConfig(
+            model_settings=ModelSettings(
+                temperature=1.0, # Temperature must be 1.0 for reasoning to be enabled
+                max_tokens=20000,
+                extra_body={
+                    "thinking": {
+                        "type": "enabled",
+                        "budget_tokens": 10000
                     }
-                )
+                }
             )
-        else:
-            run_config = None
-        results = await asyncio.gather(*[retry_runner_safer(agent, user_prompt, run_config=run_config) for _ in range(user_prompt_config.breadth)])
-        if results is None:
-            return None
-        reasonings = []
-        plans = []
-        for result in results:
-            reasoning, plan = seperate_reasoning(result)
-            if reasoning is not None:
-                reasonings.append(reasoning)
-                plans.append(plan)
-        return PlannerResponse(
-            service_name=single_record["service_name"],
-            reasonings=reasonings,
-            plans=plans
         )
+    else:
+        run_config = None
+    results = await asyncio.gather(*[retry_runner_safer(agent, user_prompt, run_config=run_config) for _ in range(user_prompt_config.breadth)])
+    if results is None:
+        return None
+    reasonings = []
+    plans = []
+    for result in results:
+        reasoning, plan = seperate_reasoning(result)
+        if reasoning is not None:
+            reasonings.append(reasoning)
+            plans.append(plan)
+    return PlannerResponse(
+        service_name=single_record["service_name"],
+        reasonings=reasonings,
+        plans=plans
+    )
 
 async def main(kwargs):
     agent = kwargs["agent"]

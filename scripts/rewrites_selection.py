@@ -23,33 +23,32 @@ def construct_summarizer_prompt(config: SummarizerPromptConfig):
     return prompt
 
 async def sample_once(config: SummarizerPromptConfig, agent, name):
-    with logfire.span(name) as main_span:
-        try:
-            user_prompt = construct_summarizer_prompt(config)
-            if "claude" in agent.model.model.lower():
-                run_config = RunConfig(
-                    model_settings=ModelSettings(
-                        temperature=1.0, # Temperature must be 1.0 for reasoning to be enabled
-                        max_tokens=20000,
-                        extra_body={
-                            "thinking": {
-                                "type": "enabled",
-                                "budget_tokens": 10000
-                            }
+    try:
+        user_prompt = construct_summarizer_prompt(config)
+        if "claude" in agent.model.model.lower():
+            run_config = RunConfig(
+                model_settings=ModelSettings(
+                    temperature=1.0, # Temperature must be 1.0 for reasoning to be enabled
+                    max_tokens=20000,
+                    extra_body={
+                        "thinking": {
+                            "type": "enabled",
+                            "budget_tokens": 10000
                         }
-                    )
+                    }
                 )
-            else:
-                run_config = None
-            result = await retry_runner_safer(agent, user_prompt, run_config=run_config)
-            if result is None:
-                print(f"[Skip] Failed to get result for {name}")
-                return
-            return result
-        except Exception as e:
-            print(f"[Error] Failed to process {name}: {e}")
-            traceback.print_exc()
-            raise
+            )
+        else:
+            run_config = None
+        result = await retry_runner_safer(agent, user_prompt, run_config=run_config)
+        if result is None:
+            print(f"[Skip] Failed to get result for {name}")
+            return
+        return result
+    except Exception as e:
+        print(f"[Error] Failed to process {name}: {e}")
+        traceback.print_exc()
+        raise
 
 async def process_optimization_item(executor_result, k, v, args, summarizer_agent):
     """Process a single optimization item summarizer"""

@@ -12,12 +12,12 @@ def get_baseline_latency(baseline_df: pd.DataFrame, baseline_trace_path: str) ->
         raise RuntimeError(f"Baseline latency not found for trace_path={baseline_trace_path}")
     return load_json_file(Trace, row["trace_path"].iloc[0]).evaluation.performance.latency_ms
 
-def get_exp_dates(exp_dir: str) -> List[str]:
+def get_exp_dates(exp_dir: str, max_iters: int) -> List[str]:
     log_file = os.path.join(exp_dir, "log.txt")
     with open(log_file, "r") as f:
         exp_dates = f.readlines()
     exp_dates = [d.strip() for d in exp_dates]
-    return exp_dates
+    return exp_dates[:max_iters]
 
 def create_plot_figure(case_names: List[str], figsize: Tuple[int, int] = None) -> Tuple[plt.Figure, List[plt.Axes]]:
     n = len(case_names)

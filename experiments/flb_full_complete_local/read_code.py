@@ -19,7 +19,12 @@ from flashinfer_bench.data import load_json_file
 
 # gqa_paged_decode
 # solution_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints/solutions/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/54fc7efa3d6045c3a2acbb497d086e73.json"
-solution_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/gpt-5_triton_f88811.json"
+# solution_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/gqa_paged/gqa_paged_decode_h32_kv4_d128_ps1/gpt-5_triton_f88811.json"
+
+# moe
+# solution_path = "/home/ubuntu/AccelOpt-exps/checkpoints/12-26-10-18/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/gpt-o3_triton_c1adb5.json"
+# solution_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/7222798c4446466a8d7774756ce8e7b4.json"
+solution_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/6869031cb17b4a8a9b73979e932951b0.json"
 solution = load_json_file(Solution, solution_path)
-with open("temp.py", "w") as f:
+with open("temp_opt.py", "w") as f:
     f.write(solution.sources[0].content)
