@@ -12,6 +12,8 @@ kernels for emerging AI acclerators, eliminating the need for expert-provided ha
 knowledge. AccelOpt explores the kernel optimization space through iterative generation, informed by an
 optimization memory that curates experiences and insights from previously encountered slow-fast kernel pairs.
 
+🚧 This repository is still under construction.
+
 ## Setup
 ### Trainium 
 #### Machines
@@ -35,7 +37,7 @@ python setup.py install
 #### Machines
 EC2 Instance: p5.48xlarge
 
-AMI: Deep Learning AMI Neuron (Ubuntu 22.04)
+AMI: Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.8 (Ubuntu 24.04)
 #### Install
 ```
 # Create a PyTorch environment first

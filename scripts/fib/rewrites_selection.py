@@ -7,7 +7,6 @@ import os
 import asyncio
 from agents import AsyncOpenAI, Agent, OpenAIChatCompletionsModel, set_tracing_disabled, RunConfig, ModelSettings
 from pydantic import BaseModel
-import logfire
 import traceback
 import re
 
@@ -231,9 +230,6 @@ async def main(args):
     
     for executor_result in executor_results["executor_results"]:
         service_name = executor_result["baseline_solution_path"]
-        logfire_service_name = load_json_file(Solution, service_name).name
-        logfire.configure(service_name=logfire_service_name)
-        logfire.instrument_openai()
         if service_name not in service_name_to_selected_plan_ids:
             continue
         for k in service_name_to_selected_plan_ids[service_name]:
