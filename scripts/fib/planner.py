@@ -2,6 +2,7 @@ from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel, RunResult, se
 import pandas as pd
 from pydantic import BaseModel
 import asyncio
+import logfire
 from datetime import datetime, timezone
 from accelopt.utils import retry_runner_safer
 from accelopt.flb_wrapper import format_definition
@@ -169,6 +170,8 @@ if __name__ == "__main__":
         all_main_args.append(main_arg)
 
     set_tracing_disabled(disabled=True)
+    logfire.configure()
+    logfire.instrument_openai()
     
     # Run all queries concurrently without limits
     async def run_all():

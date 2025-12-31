@@ -8,6 +8,7 @@ import time
 import asyncio
 import uuid
 import pandas as pd
+import logfire
 from pydantic import BaseModel
 from accelopt.utils import extract_first_code, retry_runner_safer
 from accelopt.flb_wrapper import FlashInferKernel, format_definition, get_unique_trace_name
@@ -358,6 +359,8 @@ async def main(args):
     client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY, timeout=LLM_TIMEOUT)
     model = OpenAIChatCompletionsModel(model=model_config["model"], openai_client=client)
     set_tracing_disabled(disabled=True)
+    logfire.configure()
+    logfire.instrument_openai()
 
     # Collect all results
     output_list = []

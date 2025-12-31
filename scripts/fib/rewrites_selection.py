@@ -9,6 +9,7 @@ from agents import AsyncOpenAI, Agent, OpenAIChatCompletionsModel, set_tracing_d
 from pydantic import BaseModel
 import traceback
 import re
+import logfire
 
 class SummarizerPromptConfig(BaseModel):
     user_template_path: str
@@ -121,6 +122,8 @@ async def main(args):
         openai_client=summarizer_client
     )
     set_tracing_disabled(disabled=True)
+    logfire.configure()
+    logfire.instrument_openai()
 
     with open(args.base_prompt_path, "r") as f:
         summarizer_system_prompt = f.read()

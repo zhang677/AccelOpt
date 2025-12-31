@@ -13,16 +13,16 @@ cd $EXP_DIR # Important because *.txt use relative paths
 LOG_ENV_NAME=$(echo $EXP_DATE | sed 's/-//g')
 echo $LOG_ENV_NAME > $EXP_DIR/log_env_name.txt
 export OTEL_SERVICE_NAME=$LOG_ENV_NAME 
-export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317"
-export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
-export OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
-export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+export LOGFIRE_SEND_TO_LOGFIRE="false"
+export LOGFIRE_ENVIRONMENT=$LOG_ENV_NAME 
 echo "OTEL_SERVICE_NAME: $OTEL_SERVICE_NAME"
 
 mkdir -p $EXP_DIR/rewrites
 CONSTRUCT_EXPERIENCE_EXEC="$ACCELOPT_BASE_DIR/scripts/construct_experience.py"
 CONSTRUCT_EXPERIENCE_OUTPUT_PATH="$EXP_DIR/rewrites/aggregated_rewrites_list.json"
-opentelemetry-instrument python $CONSTRUCT_EXPERIENCE_EXEC \
+python $CONSTRUCT_EXPERIENCE_EXEC \
         --is_first \
         --experience_list_path $EXPERIENCE_LIST_PATH \
         --output_path $CONSTRUCT_EXPERIENCE_OUTPUT_PATH \
@@ -42,7 +42,7 @@ PLANNER_USER_TEMPLATE_PATH="$ACCELOPT_BASE_DIR/prompts/flb/planner_prompts/plann
 PLANNER_PROFILE_RESULT_PATH="$EXP_DIR/candidates/profile_results.csv"
 PLANNER_MODEL_CONFIG_PATH="$EXP_BASE_DIR/configs/planner_config.json"
 # PLANNER_DISPLAYED_PROFILES_PATH="$ACCELOPT_BASE_DIR/prompts/planner_prompts/displayed_profiles.json"
-opentelemetry-instrument python $PLANNER_EXEC --output_path $PLANNER_OUTPUT_PATH \
+python $PLANNER_EXEC --output_path $PLANNER_OUTPUT_PATH \
     --breadth $BREADTH \
     --exp_dir $EXP_DIR \
     --base_prompt_path $PLANNER_PROMPT_CONSTRUCTOR_NEW_BASE_PROMPT_PATH \
@@ -57,7 +57,7 @@ EXECUTOR_USER_TEMPLATE_PATH="$ACCELOPT_BASE_DIR/prompts/flb/executor_prompts/use
 # SAVE_FIELDS_PATH="$ACCELOPT_BASE_DIR/prompts/profile_list.json"
 EXECUTOR_MODEL_CONFIG_PATH="$EXP_BASE_DIR/configs/executor_config.json"
 EXECUTOR_LOG_OUTPUT_PATH="$EXP_DIR/executor_results.json"
-opentelemetry-instrument python $SINGLE_EXECUTOR_EXEC --num_samples $NUM_SAMPLES \
+python $SINGLE_EXECUTOR_EXEC --num_samples $NUM_SAMPLES \
     --problems_path $PLANNER_PROFILE_RESULT_PATH \
     --extractor_output_path $PLANNER_OUTPUT_PATH \
     --exp_dir $EXP_DIR \
