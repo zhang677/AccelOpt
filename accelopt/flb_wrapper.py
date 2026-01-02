@@ -1,6 +1,5 @@
 from .eval_numpy import KernelProperties
-from pathlib import Path
-from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Evaluation, Benchmark, BenchmarkConfig, EvaluationStatus
+from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition, SourceFile, BuildSpec, Trace, Benchmark, BenchmarkConfig, EvaluationStatus
 from flashinfer_bench.data import save_json_file, load_json_file
 
 
