@@ -110,3 +110,21 @@ def profile_orm(supabase_client: Client, obj: Trace, bench_config: BenchmarkConf
         "benchmark_config": perf_data,
         "benchmark_config_hash": bench_config_hash
     }
+
+def definition_to_obj(data) -> Definition:
+    return Definition.model_validate(data["definition"])
+
+def workload_to_obj(data) -> Trace:
+    return Trace.model_validate(data["workload"])
+
+def solution_to_obj(data) -> Solution:
+    return Solution.model_validate(data["solution"])
+
+def profile_to_obj(supabase_client: Client, data) -> Trace:
+    workload_data = supabase_client.table("workloads").select("workload").eq("id", data["workload_id"]).execute().data[0]["workload"]
+    solution = supabase_client.table("solutions").select("solution").eq("id", data["solution_id"]).execute().data[0]["solution"]["name"]
+    evaluation_data = data["evaluation"]
+    trace = Trace.model_validate(workload_data)
+    trace.solution = solution
+    trace.evaluation = Evaluation.model_validate(evaluation_data)
+    return trace
