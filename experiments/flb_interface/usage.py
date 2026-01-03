@@ -8,132 +8,6 @@ import uuid
 import logging
 
 logging.basicConfig(level=logging.INFO)
-# Profile a solution https://github.com/flashinfer-ai/flashinfer-bench/blob/main/examples/kernel_generator/kernel_generator.py#L445
-# Does FlashInfer-Bench prefer string or file path?
-# (traceset, definition, [solution], selected_workload)
-# self.traceset
-# Path to definition
-# code of solution
-# Path to workload
-
-class KernelProperties(BaseModel):
-    """
-    Single Kernel Execution
-    """
-    compiled: bool = False
-    correct: bool = False
-    runnable: bool = False
-    metadata: dict = Field(default_factory=dict)
-
-class FlashInferKernelLocal:
-    def __init__(self, traceset_path: str, definition_path: str):
-        self.traceset = TraceSet.from_path(traceset_path)
-        self.definition = load_json_file(Definition, definition_path)
-
-    def profile(self, solution_path, workload_path: str, **kwargs) -> Evaluation:
-        res = KernelProperties()
-        definition = self.definition
-        solution = load_json_file(Solution, solution_path)
-        selected_workload = load_json_file(Trace, workload_path)
-        temp_traceset = TraceSet(
-            root=self.traceset.root,
-            definitions={definition.name: definition},
-            solutions={definition.name: [solution]},
-            workloads={definition.name: [selected_workload, selected_workload]},
-            traces={definition.name: []},
-        )
-        cfg = BenchmarkConfig()
-        cfg.profile_baseline = False
-        cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
-        benchmark = Benchmark(temp_traceset, cfg)
-        result_traceset = benchmark.run_all()
-
-        traces = result_traceset.traces.get(definition.name, [])
-
-        trace_map = {trace.solution: trace for trace in traces}
-        evaluation = trace_map.get(solution.name).evaluation
-        if evaluation.status == EvaluationStatus.PASSED:
-            res.compiled = True
-            res.runnable = True
-            res.correct = True
-            res.metadata = {"latency": evaluation.performance.latency_ms}
-        elif evaluation.status in [EvaluationStatus.INCORRECT_SHAPE, EvaluationStatus.INCORRECT_NUMERICAL, EvaluationStatus.INCORRECT_DTYPE]:
-            res.compiled = True
-            res.runnable = True
-            res.correct = False
-            res.metadata = {"correctness_error": evaluation.log}
-        elif evaluation.status == EvaluationStatus.RUNTIME_ERROR:
-            res.compiled = True
-            res.runnable = False
-            res.correct = False
-            res.metadata = {"runtime_error": evaluation.log}
-        elif evaluation.status in [EvaluationStatus.COMPILATION_ERROR, EvaluationStatus.TIMEOUT]:
-            res.compiled = False
-            res.runnable = False
-            res.correct = False
-            res.metadata = {"compilation_error": evaluation.log}
-        else:
-            raise ValueError(f"Unsupported evaluation status: {evaluation.status}")
-        return res
-
-    def save_solution(self, code, **kwargs) -> Path:
-        definition = self.definition
-        solutions_dir = (
-            self.traceset.root / "solutions" / definition.op_type / definition.name
-        )
-        solutions_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create filename using solution name
-        solution = self._create_solution_from_code(code, definition, **kwargs)
-        solution_filename = f"{solution.name}.json"
-        solution_path = solutions_dir / solution_filename
-
-        save_json_file(solution, solution_path)
-        return solution_path
-
-    def _get_supported_language(self, language: str) -> SupportedLanguages:
-        language_map = {
-            "triton": SupportedLanguages.TRITON,
-        }
-        if language.lower() in language_map:
-            return language_map[language.lower()]
-        else:
-            raise ValueError(f"Unsupported language: {language}")
-
-    def _create_solution_from_code(
-        self, code, definition: Definition, **kwargs
-    ) -> Solution:
-        solution_name = kwargs.get("name", "default_solution")
-        solution_description = kwargs.get("description", "default_description")
-        language = self._get_supported_language(kwargs.get("language", "triton"))
-
-        if language == SupportedLanguages.CUDA and isinstance(code, dict):
-            sources = []
-            for filename, content in code.items():
-                sources.append(SourceFile(path=filename, content=content))
-
-            entry_point = "main.cpp::run"
-        else:
-            if isinstance(code, dict):
-                code = next(iter(code.values()))
-
-            sources = [SourceFile(path="main.py", content=code)]
-            entry_point = "main.py::run"
-
-        solution = Solution(
-            name=solution_name,
-            definition=definition.name,
-            author=kwargs.get("author", "AccelOpt"),
-            spec=BuildSpec(
-                language=language,
-                target_hardware=[kwargs.get("target_gpu", "H100")],
-                entry_point=entry_point,
-            ),
-            sources=sources,
-            description=solution_description,
-        )
-        return solution
-
 
 if __name__ == "__main__":
     # Check all definitions
@@ -174,12 +48,15 @@ if __name__ == "__main__":
     checkpoint_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
     
     # Profile baseline kernel
-    # definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048.json"
-    # workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_5e8dc11.json"
-    # baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/gpt-o3_triton_c1adb5.json"
-    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1/gpt-o3_triton_4c17a1.json"
-    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1.json"
-    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1_939f995.json"
+    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048.json"
+    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_5e8dc11.json"
+    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/gpt-o3_triton_c1adb5.json"
+    # baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1/gpt-o3_triton_4c17a1.json"
+    # definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1.json"
+    # workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1_939f995.json"
+    # definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/mla_paged/mla_paged_prefill_causal_h16_ckv512_kpe64_ps1.json"
+    # baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/mla_paged/mla_paged_prefill_causal_h16_ckv512_kpe64_ps1/gpt-5_triton_88089a.json"
+    # workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/mla_paged/mla_paged_prefill_causal_h16_ckv512_kpe64_ps1_733a7bb.json"
     baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
     baseline_trace, baseline_res = baseline_kernel.profile(
         baseline_path,
@@ -189,33 +66,33 @@ if __name__ == "__main__":
         use_isolated_runner=True,
         destination_passing_style=True
     )
+    print(baseline_trace.evaluation.performance.reference_latency_ms)
     save_json_file(baseline_trace, "temp.json")
     
     
     # Register a solution to FlashInfer-Trace
-    mock_kernel_path = baseline_path
-    mock_solution = load_json_file(Solution, mock_kernel_path)
-    kernel_code = mock_solution.sources[0].content
-    kernel = FlashInferKernel(checkpoint_path, definition_path)
-    solution_path = kernel.create_and_save_solution(
-        kernel_code,
-        author="AccelOpt",
-        language="triton",
-        target_gpu="H100",
-        name=f"optimized_{uuid.uuid4()}",
-        description=f"Optimized kernel"
-    )
-    res = kernel.profile(
-        solution_path, 
-        workload_path=workload_path,
-        timeout_seconds=300,
-        profile_baseline=True,
-        use_isolated_runner=True
-    )
-    print(res)
+    # mock_kernel_path = baseline_path
+    # mock_solution = load_json_file(Solution, mock_kernel_path)
+    # kernel_code = mock_solution.sources[0].content
+    # kernel = FlashInferKernel(checkpoint_path, definition_path)
+    # solution_path = kernel.create_and_save_solution(
+    #     kernel_code,
+    #     author="AccelOpt",
+    #     language="triton",
+    #     target_gpu="H100",
+    #     name=f"optimized_{uuid.uuid4()}",
+    #     description=f"Optimized kernel"
+    # )
+    # res = kernel.profile(
+    #     solution_path, 
+    #     workload_path=workload_path,
+    #     timeout_seconds=300,
+    #     profile_baseline=True,
+    #     use_isolated_runner=True
+    # )
 
-    print(f"Solution saved to: {solution_path}")
+    # print(f"Solution saved to: {solution_path}")
 
-    os.remove(solution_path)
-    print(f"Solution removed: {solution_path}")
+    # os.remove(solution_path)
+    # print(f"Solution removed: {solution_path}")
 
