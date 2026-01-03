@@ -5,6 +5,9 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from accelopt.flb_wrapper import FlashInferKernel
 import uuid
+import logging
+
+logging.basicConfig(level=logging.INFO)
 # Profile a solution https://github.com/flashinfer-ai/flashinfer-bench/blob/main/examples/kernel_generator/kernel_generator.py#L445
 # Does FlashInfer-Bench prefer string or file path?
 # (traceset, definition, [solution], selected_workload)
@@ -171,16 +174,20 @@ if __name__ == "__main__":
     checkpoint_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
     
     # Profile baseline kernel
-    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048.json"
-    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_5e8dc11.json"
-    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/gpt-o3_triton_c1adb5.json"
+    # definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048.json"
+    # workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_5e8dc11.json"
+    # baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/gpt-o3_triton_c1adb5.json"
+    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1/gpt-o3_triton_4c17a1.json"
+    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1.json"
+    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/mla_paged/mla_paged_decode_h16_ckv512_kpe64_ps1_939f995.json"
     baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
     baseline_trace, baseline_res = baseline_kernel.profile(
         baseline_path,
         workload_path=workload_path,
         timeout_seconds=300,
         profile_baseline=True,
-        use_isolated_runner=True
+        use_isolated_runner=True,
+        destination_passing_style=True
     )
     save_json_file(baseline_trace, "temp.json")
     
