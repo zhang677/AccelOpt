@@ -29,7 +29,7 @@ def try_upsert(supabase_client: Client, table_name: str, data: dict):
 
 def get_solution_hash(solution: Solution, hash_version: int = 1) -> str:
     if hash_version == 1:
-        assert solution.spec.language == "triton", "Only 'triton' solutions are supported in this hash."
+        assert solution.spec.language in ["triton", "python"], "Only 'triton' and 'python' solutions are supported in this hash."
         source_code = solution.sources[0].content
         code_hash = sha256(source_code.encode('utf-8')).hexdigest()
     else:
@@ -74,7 +74,7 @@ def workload_orm(supabase_client: Client, obj: Trace):
     }
 
 def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
-    assert obj.spec.language == "triton", "Only 'triton' solutions are supported in this ORM."
+    assert obj.spec.language in ["triton", "python"], "Only 'triton' and 'python' solutions are supported in this ORM."
     def_name = obj.definition
     # Get the definition_id based on the def_name
     response = supabase_client.table("definitions").select("id").eq("name", def_name).execute()
