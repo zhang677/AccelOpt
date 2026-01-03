@@ -43,7 +43,7 @@ AMI: Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.8 (Ubuntu 24.04)
 # Create a PyTorch environment first
 pip install logfire
 pip install openai-agents
-https://github.com/zhang677/flashinfer-bench # A necesssary feature hasn't been merged to the main branch
+git clone https://github.com/flashinfer-ai/flashinfer-bench.git
 cd flashinfer-bench
 pip install -v -e .
 cd ..
