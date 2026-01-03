@@ -3,7 +3,6 @@ from flashinfer_bench import TraceSet, Solution, SupportedLanguages, Definition,
 from flashinfer_bench.data import save_json_file, load_json_file
 from pathlib import Path
 from pydantic import BaseModel, Field
-import json
 from accelopt.flb_wrapper import FlashInferKernel
 import uuid
 # Profile a solution https://github.com/flashinfer-ai/flashinfer-bench/blob/main/examples/kernel_generator/kernel_generator.py#L445
@@ -172,18 +171,18 @@ if __name__ == "__main__":
     checkpoint_path = "/home/ubuntu/AccelOpt/experiments/flb_interface/checkpoints"
     
     # Profile baseline kernel
-    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/gemm/gemm_n28672_k4096.json"
-    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/gemm/gemm_n28672_k4096_32cd269.json"
-    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/gemm/gemm_n28672_k4096/gpt-o3_triton_4c9c32.json"
+    definition_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/definitions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048.json"
+    workload_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_5e8dc11.json"
+    baseline_path = "/home/ubuntu/AccelOpt/experiments/flb_optimize/solutions/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/gpt-o3_triton_c1adb5.json"
     baseline_kernel = FlashInferKernel(checkpoint_path, definition_path)
-    baseline_res = baseline_kernel.profile(
+    baseline_trace, baseline_res = baseline_kernel.profile(
         baseline_path,
         workload_path=workload_path,
         timeout_seconds=300,
         profile_baseline=True,
         use_isolated_runner=True
     )
-    print(baseline_res)
+    save_json_file(baseline_trace, "temp.json")
     
     
     # Register a solution to FlashInfer-Trace

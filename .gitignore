@@ -212,3 +212,4 @@ tests/*.csv
 temp.md
 temp.py
 temp_opt.py
+temp.json

@@ -1,0 +1,85 @@
+{
+  "definition": "moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048",
+  "workload": {
+    "axes": {
+      "seq_len": 14107
+    },
+    "inputs": {
+      "routing_logits": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "routing_logits"
+      },
+      "hidden_states": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "hidden_states"
+      },
+      "hidden_states_scale": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "hidden_states_scale"
+      },
+      "routing_bias": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "routing_bias"
+      },
+      "gemm1_weights": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "gemm1_weights"
+      },
+      "gemm1_weights_scale": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "gemm1_weights_scale"
+      },
+      "gemm2_weights": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "gemm2_weights"
+      },
+      "gemm2_weights_scale": {
+        "type": "safetensors",
+        "path": "./blob/workloads/moe/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048/moe_fp8_block_scale_ds_routing_topk8_ng8_kg4_e32_h7168_i2048_ad0adeae69b443b192dc6c7394302345.safetensors",
+        "tensor_key": "gemm2_weights_scale"
+      },
+      "local_expert_offset": {
+        "type": "scalar",
+        "value": 32
+      },
+      "routed_scaling_factor": {
+        "type": "scalar",
+        "value": 2.5
+      }
+    },
+    "uuid": "5e8dc11c-f2a9-42d5-8dce-9419cbf34d5d"
+  },
+  "solution": "gpt-o3_triton_c1adb5",
+  "evaluation": {
+    "status": "PASSED",
+    "environment": {
+      "hardware": "NVIDIA H100 80GB HBM3",
+      "libs": {
+        "torch": "2.9.1+cu128",
+        "triton": "3.5.1",
+        "cuda": "12.8"
+      }
+    },
+    "timestamp": "2025-12-21T23:18:37.676131",
+    "log": "",
+    "correctness": {
+      "max_relative_error": 0.0,
+      "max_absolute_error": 0.0,
+      "extra": {
+        "matched_ratio": 1.0
+      }
+    },
+    "performance": {
+      "latency_ms": 57.46767934163412,
+      "reference_latency_ms": 57.42339197794596,
+      "speedup_factor": 0.9992293517992109
+    }
+  }
+}

@@ -58,7 +58,7 @@
   },
   "solution": "gpt-o3_triton_c1adb5",
   "evaluation": {
-    "status": "PASSED",
+    "status": "RUNTIME_ERROR",
     "environment": {
       "hardware": "NVIDIA H100 80GB HBM3",
       "libs": {
@@ -67,19 +67,7 @@
         "cuda": "12.8"
       }
     },
-    "timestamp": "2025-12-21T23:18:37.676131",
-    "log": "",
-    "correctness": {
-      "max_relative_error": 0.0,
-      "max_absolute_error": 0.0,
-      "extra": {
-        "matched_ratio": 1.0
-      }
-    },
-    "performance": {
-      "latency_ms": 57.46767934163412,
-      "reference_latency_ms": 57.42339197794596,
-      "speedup_factor": 0.9992293517992109
-    }
+    "timestamp": "2026-01-03T06:15:37.994283",
+    "log": "Traceback (most recent call last):\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/language/core.py\", line 43, in wrapper\n    return fn(*args, **kwargs)\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/language/core.py\", line 1638, in arange\n    return _semantic.arange(start, end)\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/language/semantic.py\", line 574, in arange\n    raise ValueError(\"arange's arguments must be of type tl.constexpr\")\nValueError: arange's arguments must be of type tl.constexpr\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/ubuntu/flashinfer-bench/flashinfer_bench/bench/evaluators/lowbit.py\", line 50, in check_correctness\n    out = sol_runnable(**inp)\n  File \"/home/ubuntu/flashinfer-bench/flashinfer_bench/compile/runnable.py\", line 86, in __call__\n    ret = self._callable(**kwargs)\n  File \"/home/ubuntu/.cache/flashinfer_bench/cache/triton/fib_triton_gpt_o3_triton_c1adb5_8da9eb/fib_triton_gpt_o3_triton_c1adb5_8da9eb/main.py\", line 142, in run\n    A = _dequant_fp8_block128(hidden_states, hidden_states_scale)  # [T, 7168]\n  File \"/home/ubuntu/.cache/flashinfer_bench/cache/triton/fib_triton_gpt_o3_triton_c1adb5_8da9eb/fib_triton_gpt_o3_triton_c1adb5_8da9eb/main.py\", line 77, in _dequant_fp8_block128\n    _dequant_fp8_block128_kernel[grid](\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/runtime/jit.py\", line 419, in <lambda>\n    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/runtime/jit.py\", line 733, in run\n    kernel = self._do_compile(key, signature, device, constexprs, options, attrs, warmup)\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/runtime/jit.py\", line 861, in _do_compile\n    kernel = self.compile(src, target=target, options=options.__dict__)\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 300, in compile\n    module = src.make_ir(target, options, codegen_fns, module_map, context)\n  File \"/home/ubuntu/miniconda3/envs/nverl/lib/python3.10/site-packages/triton/compiler/compiler.py\", line 80, in make_ir\n    return ast_to_ttir(self.fn, self, context=context, options=options, codegen_fns=codegen_fns,\ntriton.compiler.errors.CompilationError: at 12:14:\ndef _dequant_fp8_block128_kernel(\n    x_ptr,           # [T, H]      – fp8  (E4M3-FN)\n    s_ptr,           # [H/128, T]  – fp32 (transposed, block scales)\n    y_ptr,           # [T, H]      – fp32 (output)\n    T: tl.constexpr, # seq_len\n    H: tl.constexpr, # hidden (=7168)\n):\n    BLOCK_H = 128\n\n    tok_id  = tl.program_id(0)               #   0 … T-1\n    blk_id  = tl.program_id(1)               #   0 … 55\n    offs_h  = tl.arange(0, BLOCK_H)          # vector 0 … 127\n              ^\narange's arguments must be of type tl.constexpr\n"
   }
 }
