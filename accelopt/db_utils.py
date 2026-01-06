@@ -36,11 +36,11 @@ def get_solution_hash(solution: Solution, hash_version: int = 1) -> str:
         raise ValueError(f"Unsupported hash_version: {hash_version}")
     return code_hash
 
-def get_benchmark_config_hash(bench_config: BenchmarkConfig) -> str:
+def get_benchmark_config_hash(bench_config: BenchmarkConfig) -> (tuple[dict, str]):
     # 1. Define the performance-critical fields exactly as requested
     perf_fields = {
         "warmup_runs", "iterations", "num_trials", "rtol", "atol",
-        "use_isolated_runner", "required_matched_ratio", 
+        "required_matched_ratio", 
         "sampling_validation_trials", "sampling_tvd_threshold", "timeout_seconds"
     }
 
@@ -51,13 +51,14 @@ def get_benchmark_config_hash(bench_config: BenchmarkConfig) -> str:
         for f in fields(bench_config) 
         if f.name in perf_fields
     }
+
     config_str = json.dumps(perf_data, sort_keys=True, separators=(',', ':'))
     config_hash = sha256(config_str.encode('utf-8')).hexdigest()
     return perf_data, config_hash
 
 def definition_orm(obj: Definition):
     return {
-        "definition": obj.model_dump(exclude_unset=True),
+        "definition": obj.model_dump(mode="json", exclude_unset=True),
     }
 
 def workload_orm(supabase_client: Client, obj: Trace):
@@ -70,7 +71,7 @@ def workload_orm(supabase_client: Client, obj: Trace):
         raise ValueError(f"Definition with name '{def_name}' not found in the database.")
     return {
         "definition_id": definition_id,
-        "workload": obj.model_dump(exclude_unset=True)
+        "workload": obj.model_dump(mode="json", exclude_unset=True, exclude={'solution', 'evaluation'}) # Exclude solution and evaluation
     }
 
 def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
@@ -88,7 +89,7 @@ def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
         raise ValueError(f"Unsupported hash_version: {hash_version}")
     return {
         "definition_id": definition_id,
-        "solution": obj.model_dump(exclude_unset=True),
+        "solution": obj.model_dump(mode="json", exclude_unset=True),
         "hash_version": hash_version,
         "solution_hash": code_hash,
         "evolve_metadata": {}
@@ -103,10 +104,13 @@ def profile_orm(supabase_client: Client, obj: Trace, bench_config: BenchmarkConf
         raise ValueError(f"Workload with uuid '{workload_uuid}' not found in the database.")
     
     perf_data, bench_config_hash = get_benchmark_config_hash(bench_config)
+    # evaluation_dict = obj.evaluation.model_dump(mode="json", exclude_unset=True)
+    evaluation_dict = json.loads(obj.evaluation.model_dump_json(exclude_unset=True))
+
     return {
         "workload_id": workload_id,
         "solution_id": solution_id,
-        "evaluation": obj.evaluation.model_dump(exclude_unset=True),
+        "evaluation": evaluation_dict,
         "benchmark_config": perf_data,
         "benchmark_config_hash": bench_config_hash
     }

@@ -4,7 +4,6 @@ from flashinfer_bench.data import save_json_file, load_json_file
 from pathlib import Path
 from pydantic import BaseModel, Field
 from accelopt.flb_wrapper import FlashInferKernel
-import uuid
 import logging
 
 logging.basicConfig(level=logging.INFO)

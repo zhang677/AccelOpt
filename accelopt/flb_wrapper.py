@@ -63,10 +63,41 @@ def create_and_save_solution(traceset: TraceSet, definition: Definition, code, *
     save_json_file(solution, solution_path)
     return str(solution_path)
 
+class FlashInferKernelObj:
+    def __init__(self, traceset_root: str, definition: Definition):
+        self.traceset = TraceSet.from_path(traceset_root)
+        self.definition = definition
+        self.benchmark_cfg = BenchmarkConfig()
+
+    def profile(self, solution: Solution, selected_workloads: list[Trace], **kwargs) -> tuple[Trace, KernelProperties]:
+        # Only support single workload for now
+        definition = self.definition
+        if hasattr(solution.spec, "destination_passing_style"):
+            solution.spec.destination_passing_style = kwargs.get("destination_passing_style", False)
+        temp_traceset = TraceSet(
+            root=self.traceset.root,
+            definitions={definition.name: definition},
+            solutions={definition.name: [solution]},
+            workloads={definition.name: selected_workloads},
+            traces={definition.name: []},
+        )
+        cfg = BenchmarkConfig()
+        if hasattr(cfg, "profile_baseline"):
+            cfg.profile_baseline = kwargs.get("profile_baseline", True)
+        cfg.use_isolated_runner = kwargs.get("use_isolated_runner", True) # The FlashInferKernel abstraction assumes a isolated runner
+        cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
+        self.benchmark_cfg = cfg
+        benchmark = Benchmark(temp_traceset, cfg)
+        result_traceset = benchmark.run_all()
+        
+        return result_traceset.traces.get(definition.name, [])
+        
+
 class FlashInferKernel:
     def __init__(self, traceset_root: str, definition_path: str):
         self.traceset = TraceSet.from_path(traceset_root)
         self.definition = load_json_file(Definition, definition_path)
+        self.benchmark_cfg = BenchmarkConfig()
 
     def profile(self, solution_path, workload_path: str, **kwargs) -> tuple[Trace, KernelProperties]:
         # Only support single workload for now
@@ -84,9 +115,11 @@ class FlashInferKernel:
             traces={definition.name: []},
         )
         cfg = BenchmarkConfig()
-        cfg.profile_baseline = kwargs.get("profile_baseline", False)
+        if hasattr(cfg, "profile_baseline"):
+            cfg.profile_baseline = kwargs.get("profile_baseline", True)
         cfg.use_isolated_runner = kwargs.get("use_isolated_runner", True) # The FlashInferKernel abstraction assumes a isolated runner
         cfg.timeout_seconds = kwargs.get("timeout_seconds", 300)
+        self.benchmark_cfg = cfg
         benchmark = Benchmark(temp_traceset, cfg)
         result_traceset = benchmark.run_all()
         
@@ -122,7 +155,6 @@ class FlashInferKernel:
 
     def create_and_save_solution(self, code, **kwargs) -> str:
         return create_and_save_solution(self.traceset, self.definition, code, **kwargs)
-
 
 # https://github.com/flashinfer-ai/flashinfer-bench/blob/93bf860d9730dec3fc990ce38ce01814ffea4118/examples/kernel_generator/kernel_generator_prompts.py#L8
 def format_definition(definition: Definition) -> str:
