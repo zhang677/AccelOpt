@@ -200,7 +200,7 @@ sliced_x = tl.where(mask, x, 0.0)
 async def stage2_profile_and_collect(
     proposals: list[dict],
     case_config: ExecutorConfig,
-    model: OpenAIChatCompletionsModel,
+    fixer_model: OpenAIChatCompletionsModel,
     per_profile_timeout: int = 900
 ):
     results = []
@@ -268,7 +268,7 @@ async def stage2_profile_and_collect(
                     record_result["error"] = error_msg
                     if fix_iter < num_fixed_iters:
                         
-                        code = await stage3_fix_code(fixer_name, profile_trace.evaluation.log, code, model)
+                        code = await stage3_fix_code(fixer_name, profile_trace.evaluation.log, code, fixer_model)
                         fix_iter += 1
                         elapsed = time.monotonic() - start
                         print(f"[Stage2] END name={fixer_name} elapsed={elapsed}s")
@@ -311,7 +311,8 @@ async def stage2_profile_and_collect(
 # ---------- main(): orchestrates proposal generation and profiling ----------
 async def process_single_service_plan(
     case_config: ExecutorConfig, 
-    model: OpenAIChatCompletionsModel
+    executor_model: OpenAIChatCompletionsModel,
+    fixer_model: OpenAIChatCompletionsModel
 ):
     pconfig = ExecutorPromptConfig(
         definition_path=case_config.definition_path,
@@ -321,13 +322,13 @@ async def process_single_service_plan(
         optimization_plan=case_config.optimization_plan,
         save_fields=case_config.save_fields,
     )
-    agent = Agent(name="Executor", instructions=case_config.system_prompt, model=model)
+    agent = Agent(name="Executor", instructions=case_config.system_prompt, model=executor_model)
 
     # 1) LLM parallel proposal generation
     proposals = await stage1_gather_proposals(case_config.service_name, pconfig, agent, case_config.num_samples)
     
     # 2) Sequential profiling with result collection
-    results = await stage2_profile_and_collect(proposals, case_config, model, per_profile_timeout=180)
+    results = await stage2_profile_and_collect(proposals, case_config, fixer_model, per_profile_timeout=180)
     
     return results
 
@@ -353,11 +354,17 @@ async def main(args):
         model_config = json.load(f)
 
     # model client
-    BASE_URL = model_config['url']
-    API_KEY = model_config['api_key']
     LLM_TIMEOUT = 60000
+    BASE_URL = model_config['executor']['url']
+    API_KEY = model_config['executor']['api_key']
     client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY, timeout=LLM_TIMEOUT)
-    model = OpenAIChatCompletionsModel(model=model_config["model"], openai_client=client)
+    executor_model = OpenAIChatCompletionsModel(model=model_config["executor"]["model"], openai_client=client)
+
+    BASE_URL = model_config['fixer']['url']
+    API_KEY = model_config['fixer']['api_key']
+    client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY, timeout=LLM_TIMEOUT)
+    fixer_model = OpenAIChatCompletionsModel(model=model_config["fixer"]["model"], openai_client=client)
+
     set_tracing_disabled(disabled=True)
     logfire.configure()
     logfire.instrument_openai()
@@ -391,7 +398,7 @@ async def main(args):
             )
             
             plan_results = await asyncio.wait_for(
-                process_single_service_plan(case_config, model), 
+                process_single_service_plan(case_config, executor_model, fixer_model), 
                 timeout=7200
             )
             
