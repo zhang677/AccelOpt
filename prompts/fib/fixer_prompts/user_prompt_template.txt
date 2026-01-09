@@ -1,0 +1,9 @@
+# Wrong code:
+```
+{code}
+```
+
+# Error log:
+{log}
+
+Output the fixed `run` function and all the functions it calls wrapped in code block.

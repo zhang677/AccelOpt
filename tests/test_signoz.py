@@ -6,6 +6,7 @@ from accelopt.utils import retry_runner_safer
 import clickhouse_connect
 import asyncio
 import time
+import logging
 
 def extract_thought(text):
     start_tag = "<thought>"
@@ -106,9 +107,14 @@ def delete_test_traces():
     print("Cleanup mutations submitted.")
 
 if __name__ == "__main__":
-    model_config_path = "../experiments/full_complete_local/configs/planner_config.json"
-    with open(model_config_path, "r") as f:
-        model_config = json.load(f)
+    # model_config_path = "../experiments/full_complete_local/configs/planner_config.json"
+    # with open(model_config_path, "r") as f:
+    #     model_config = json.load(f)
+    model_config = {
+        'url': "https://api.together.xyz/",
+        'api_key': "tgp_v1_XrDBi5Y-pKVOMnaRxIknDxCapcJTj8kWmJNGLiI-xuE",
+        'model': "openai/gpt-oss-120b"
+    }
 
     run_query = True
     delete_existing_traces = True
@@ -149,6 +155,16 @@ if __name__ == "__main__":
                     }
                 )
             ) # The response will start with <thought>...</thought>
+        if 'gpt-oss' in model_config['model'].lower():
+            run_config = RunConfig(
+                model_settings=ModelSettings(
+                    max_tokens=10000,
+                    extra_body={
+                        'reasoning_effort': 'medium'
+                    }
+                )
+            )
+            print("Setting reasoning effort") 
         else:
             run_config = None
 
