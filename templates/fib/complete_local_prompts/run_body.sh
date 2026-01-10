@@ -45,7 +45,7 @@ python $PLANNER_EXEC --output_path $PLANNER_OUTPUT_PATH \
     --model_config_path $PLANNER_MODEL_CONFIG_PATH
 #    --displayed_profiles_path $PLANNER_DISPLAYED_PROFILES_PATH
 
-SINGLE_EXECUTOR_EXEC="$ACCELOPT_BASE_DIR/scripts/fib/executor.py"
+SINGLE_EXECUTOR_EXEC="$ACCELOPT_BASE_DIR/scripts/fib/executor_with_fixer.py"
 EXECUTOR_BASE_PROMPT_PATH="$PROMPT_BASE_DIR/executor_prompts/base_prompt.txt"
 EXECUTOR_USER_TEMPLATE_PATH="$PROMPT_BASE_DIR/executor_prompts/user_prompt_template.txt"
 FIXER_BASE_PROMPT_PATH="$PROMPT_BASE_DIR/fixer_prompts/base_prompt.txt"

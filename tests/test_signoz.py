@@ -113,7 +113,7 @@ if __name__ == "__main__":
     model_config = {
         'url': "https://api.together.xyz/",
         'api_key': "tgp_v1_XrDBi5Y-pKVOMnaRxIknDxCapcJTj8kWmJNGLiI-xuE",
-        'model': "openai/gpt-oss-120b"
+        'model': "openai/gpt-oss-20b"
     }
 
     run_query = True
@@ -167,9 +167,40 @@ if __name__ == "__main__":
             print("Setting reasoning effort") 
         else:
             run_config = None
+        if 'together' not in model_config['url']:
+            result = asyncio.run(retry_runner_safer(agent, user_prompt, run_config=run_config))
+        else:
+            response = asyncio.run(client.chat.completions.create(
+                model=model_config["model"],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": agent.instructions
+                    },
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    },
+                ],
+                max_tokens=10000,
+                extra_body=run_config.model_settings.extra_body if run_config else None
+            ))
 
-        result = asyncio.run(retry_runner_safer(agent, user_prompt, run_config=run_config))
         print("Waiting for SigNoz to index the trace...")
+        if 'gpt-oss' in model_config['model'].lower():
+            if 'together' in model_config['url']:
+                print(f"Input tokens: {response.usage.prompt_tokens}")
+                print(f"Output tokens: {response.usage.completion_tokens}")
+                print(f"Output: {response.choices[0].message.content[:100]}...{response.choices[0].message.content[-100:]}")
+                # item = response.raw_responses[0].output[0] # ResponseOutputMessage
+                reasoning_text = response.choices[0].message.reasoning
+                print(f"Reasoning: {reasoning_text[:100]}...{reasoning_text[-100:]}")
+            else:
+                print(f"Input tokens: {result.raw_responses[0].usage.input_tokens}")
+                print(f"Output tokens: {result.raw_responses[0].usage.output_tokens}")
+                print(f"Output: {result.final_output[:100]}...{result.final_output[-100:]}")
+                reasoning_text = result.raw_responses[0].output[0].summary[0].text # ResponseReasoningItem
+                print(f"Reasoning: {reasoning_text[:100]}...{reasoning_text[-100:]}")
         time.sleep(10)  # Wait for indexing
 
     data = fetch_experiment_history("test_signoz", model_config["model"])

@@ -1,7 +1,8 @@
 You are a performance optimization expert for Triton.
 
-Here is some information about Triton:
-1. triton.language.dot(input, other, acc=None):
+# Here is some information about Triton:
+## triton.language.dot(input, other, acc=None)
+
 Returns the matrix product of two blocks. The two blocks must both be two-dimensional or three-dimensional and have compatible inner dimensions. For three-dimensional blocks, tl.dot performs the batched matrix product, where the first dimension of each block represents the batch dimension.
 
 Parameters:
@@ -9,11 +10,13 @@ Parameters:
 - other (2D or 3D tensor of scalar-type in {int8, float8_e5m2, float16, bfloat16, float32}) – The second tensor to be multiplied.
 - acc (2D or 3D tensor of scalar-type in {float16, float32, int32}) – The accumulator tensor. If not None, the result is added to this tensor.
 
-2. A parameter should be defined either inside the @triton.autotune configuration or as a keyword argument of the kernel. Make sure that you don't re-define auto-tuned symbols.
+## @triton.autotune
+
+A parameter should be defined either inside the @triton.autotune configuration or as a keyword argument of the kernel. Make sure that you don't re-define auto-tuned symbols.
 ```
 @triton.autotune(configs=[
-    triton.Config(kwargs={'BLOCK_SIZE': 128}, num_warps=4),
-    triton.Config(kwargs={'BLOCK_SIZE': 1024}, num_warps=8),
+    triton.Config(kwargs={'BLOCK_SIZE': 128}, num_warps=4, num_stages=2),
+    triton.Config(kwargs={'BLOCK_SIZE': 1024}, num_warps=8, num_stages=4),
   ],
   key=['x_size'] # the two above configs will be evaluated anytime the value of x_size changes
 )
@@ -24,7 +27,84 @@ def kernel(x_ptr, x_size, BLOCK_SIZE: tl.constexpr):
 kernel[grid](x_ptr, x_size)
 ```
 
-3. Triton doesn't support slice indexing on local accumulators. Therefore, you could use tl.where to nullify or select specific elements and perform operations on the entire tensor.
+## triton.language.make_tensor_descriptor(base: tensor, shape: List[tensor], strides: List[tensor], block_shape: List[constexpr], padding_option='zero', _semantic=None)->tensor_descriptor
+
+Make a tensor descriptor object
+
+Parameters:
+base – the base pointer of the tensor, must be 16-byte aligned
+shape – A list of non-negative integers representing the tensor shape
+strides – A list of tensor strides. Leading dimensions must be multiples of 16-byte strides and the last dimension must be contiguous.
+block_shape – The shape of block to be loaded/stored from global memory
+
+Notes:
+For objects created by make_tensor_descriptor, the `load` and `store` methods only accepts a list of offsets and **does not support mask**.
+You can apply masking on the value only after it is loaded from tma.
+Currently only 2-5 dimensional tensors are supported. 
+
+Example
+```
+@triton.jit
+def inplace_abs(in_out_ptr, M, N, M_BLOCK: tl.constexpr, N_BLOCK: tl.constexpr):
+    desc = tl.make_tensor_descriptor(
+        in_out_ptr,
+        shape=[M, N],
+        strides=[N, 1],
+        block_shape=[M_BLOCK, N_BLOCK],
+    )
+
+    moffset = tl.program_id(0) * M_BLOCK
+    noffset = tl.program_id(1) * N_BLOCK
+
+    value = desc.load([moffset, noffset])
+    desc.store([moffset, noffset], tl.abs(value))
+
+# TMA descriptors require a global memory allocation
+def alloc_fn(size: int, alignment: int, stream: Optional[int]):
+    return torch.empty(size, device="cuda", dtype=torch.int8)
+
+triton.set_allocator(alloc_fn)
+
+M, N = 256, 256
+x = torch.randn(M, N, device="cuda")
+M_BLOCK, N_BLOCK = 32, 32
+grid = (M / M_BLOCK, N / N_BLOCK)
+inplace_abs[grid](x, M, N, M_BLOCK, N_BLOCK)
+```
+
+## triton.language.range(self, arg1, arg2=None, step=None, num_stages=None, loop_unroll_factor=None, disallow_acc_multi_buffer=False, flatten=False)
+
+Iterator that counts upward forever.
+```
+@triton.jit
+def kernel(...):
+    for i in tl.range(10, num_stages=3):
+        ...
+```
+Note:
+This is a special iterator used to implement similar semantics to Python’s range in the context of triton.jit functions. In addition, it allows user to pass extra attributes to the compiler.
+
+Parameters:
+arg1 – the start value.
+
+arg2 – the end value.
+
+step – the step value.
+
+num_stages – pipeline the loop into this many stages (so there are num_stages iterations of the loop in flight at once).
+Note this is subtly different than passing num_stages as a kernel argument. The kernel argument only pipelines loads that feed into dot operations, while this attribute tries to pipeline most (though not all) loads in this loop.
+
+loop_unroll_factor – Tells the Triton IR level loop unroller how many times to unroll a for loop that this range is used with. Less than 2 for this value implies no unrolling.
+
+disallow_acc_multi_buffer – If true, prevent the accumulator of the dot operation in the loop to be multi-buffered, if applicable.
+
+flatten – automatically flatten the loop nest starting at this loop to create a single flattened loop. The compiler will try to pipeline the flattened loop which can avoid stage stalling.
+
+disable_licm – Tells the compiler it shouldn’t hoist loop invariant code outside the loop. This is often useful to avoid creating long liveranges within a loop.
+
+## Triton doesn't support slice indexing on local accumulators. 
+
+Therefore, you could use tl.where to nullify or select specific elements and perform operations on the entire tensor.
 Example: If you want to zero out the second half of a row:
 ```
 # Assume x has shape [BLOCK_SIZE]
@@ -35,9 +115,9 @@ mask = cols < (BLOCK_SIZE // 2)
 sliced_x = tl.where(mask, x, 0.0)
 ```
 
-4. The start and end must be a power of two in triton.language.arange(start, end)
+## The start and end must be a power of two in triton.language.arange(start, end)
 
-5. There are no explicit shared memory management Triton APIs. The compiler manages shared memory. 
+## There are no explicit shared memory management Triton APIs. The compiler manages shared memory. 
 
 # Profile terminology
 latency: Total duration of on device time for the kernel in milliseconds

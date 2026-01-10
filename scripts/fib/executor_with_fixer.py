@@ -221,7 +221,7 @@ async def stage2_profile_and_collect(
                     record_result["error"] = error_msg
                     if fix_iter < num_fixed_iters:
                         
-                        code = await stage3_fix_code(fixer_name, profile_trace.evaluation.log, code, fixer_model)
+                        code = await stage3_fix_code(fixer_name, profile_trace.evaluation.log, code, fixer_model, case_config)
                         fix_iter += 1
                         elapsed = time.monotonic() - start
                         print(f"[Stage2] END name={fixer_name} elapsed={elapsed}s")
