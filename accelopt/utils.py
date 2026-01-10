@@ -2,6 +2,9 @@ import re
 import uuid, asyncio
 from agents import Runner, ModelBehaviorError
 from pydantic import ValidationError
+import openai
+from agents import AsyncOpenAI
+import random
 
 def get_case_name(problem_name, values):
     sorted_keys = sorted(values.keys())
@@ -61,3 +64,33 @@ def extract_first_code(output_string: str, code_language_types: list[str]) -> st
         return code
 
     return None
+
+async def construct_query_coroutine(client: AsyncOpenAI, model_name, system_prompt, user_prompt, **kwargs):
+    return await client.chat.completions.create(
+        model=model_name,  # Use the parameter passed to the function
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        **kwargs  # Correctly passes things like temperature, max_tokens, etc.
+    )
+
+async def retry_query_coroutine(coroutine_func, max_retries=3, delay=3):
+    retryable_errors = (
+        openai.InternalServerError,   # This handles the 503/500 errors
+        openai.RateLimitError,      # This handles 429 errors
+        openai.APIConnectionError,   # This handles network/socket issues
+        openai.APITimeoutError,      # This handles timeouts
+    )
+    
+    for attempt in range(max_retries):
+        try:
+            return await coroutine_func()
+        except retryable_errors as e:
+            print(f"[Retry {attempt+1}/{max_retries}] Runner.run failed with: {type(e).__name__} -> {e}")
+            await asyncio.sleep(delay + random.uniform(0, 1))
+        except Exception as e:
+            print(f"[Fatal] Unexpected error in Runner.run: {type(e).__name__} -> {e}")
+            raise
+    print("[Abort] Max retries exceeded for Runner.run")
+    return None  
