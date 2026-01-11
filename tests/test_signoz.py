@@ -2,11 +2,11 @@
 import json
 import logfire
 from agents import Agent, AsyncOpenAI, OpenAIChatCompletionsModel, set_tracing_disabled, RunConfig, ModelSettings
-from accelopt.utils import retry_runner_safer
+from accelopt.utils import retry_runner_safer, construct_query_coroutine, retry_query_coroutine
 import clickhouse_connect
 import asyncio
 import time
-import logging
+from functools import partial
 
 def extract_thought(text):
     start_tag = "<thought>"
@@ -107,14 +107,9 @@ def delete_test_traces():
     print("Cleanup mutations submitted.")
 
 if __name__ == "__main__":
-    # model_config_path = "../experiments/full_complete_local/configs/planner_config.json"
-    # with open(model_config_path, "r") as f:
-    #     model_config = json.load(f)
-    model_config = {
-        'url': "https://api.together.xyz/",
-        'api_key': "tgp_v1_XrDBi5Y-pKVOMnaRxIknDxCapcJTj8kWmJNGLiI-xuE",
-        'model': "openai/gpt-oss-20b"
-    }
+    model_config_path = "../experiments/full_complete_local/configs/planner_config.json"
+    with open(model_config_path, "r") as f:
+        model_config = json.load(f)
 
     run_query = True
     delete_existing_traces = True
@@ -148,14 +143,15 @@ if __name__ == "__main__":
                         'extra_body':{
                             'google': {
                                 'thinking_config': {
-                                    'include_thoughts': True
+                                    'include_thoughts': True,
+                                    'thinking_level': 'medium'
                                 }
                             }
                         }
                     }
                 )
             ) # The response will start with <thought>...</thought>
-        if 'gpt-oss' in model_config['model'].lower():
+        elif 'gpt-oss' in model_config['model'].lower():
             run_config = RunConfig(
                 model_settings=ModelSettings(
                     max_tokens=10000,
@@ -167,9 +163,20 @@ if __name__ == "__main__":
             print("Setting reasoning effort") 
         else:
             run_config = None
-        if 'together' not in model_config['url']:
-            result = asyncio.run(retry_runner_safer(agent, user_prompt, run_config=run_config))
-        else:
+        if 'gemini' in model_config["model"].lower():
+            kwargs = {}
+            kwargs['max_tokens'] = 10000
+            kwargs['extra_body'] = run_config.model_settings.extra_body
+            query_coro = partial(construct_query_coroutine,
+                client,
+                model_config["model"],
+                agent.instructions,
+                user_prompt,
+                **kwargs
+            )
+            response = asyncio.run(retry_query_coroutine(query_coro))
+            print(response.usage) # CompletionUsage(completion_tokens=236, prompt_tokens=41, total_tokens=967, completion_tokens_details=None, prompt_tokens_details=None)
+        elif 'together' in model_config['url']:
             response = asyncio.run(client.chat.completions.create(
                 model=model_config["model"],
                 messages=[
@@ -185,6 +192,10 @@ if __name__ == "__main__":
                 max_tokens=10000,
                 extra_body=run_config.model_settings.extra_body if run_config else None
             ))
+            print(response.usage) # CompletionUsage(completion_tokens=2152, prompt_tokens=114, total_tokens=2266, completion_tokens_details=None, prompt_tokens_details=None)
+        else:
+            result = asyncio.run(retry_runner_safer(agent, user_prompt, run_config=run_config))
+
 
         print("Waiting for SigNoz to index the trace...")
         if 'gpt-oss' in model_config['model'].lower():

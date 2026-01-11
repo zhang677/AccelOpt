@@ -83,7 +83,7 @@ async def propose_once(name: str, config: ExecutorPromptConfig, client: AsyncOpe
         kwargs = {}
         if "gpt-oss" in config.model_name.lower():
             kwargs['extra_body'] = {'reasoning_effort': 'medium'}
-            kwargs['max_tokens'] = 10000
+            kwargs['max_tokens'] = 65536
         elif "claude" in config.model_name.lower():
             kwargs['temperature'] = 1.0  # Temperature must be 1.0 for reasoning to be enabled
             kwargs['max_tokens'] = 20000
@@ -91,6 +91,17 @@ async def propose_once(name: str, config: ExecutorPromptConfig, client: AsyncOpe
                 "thinking": {
                     "type": "enabled",
                     "budget_tokens": 10000
+                }
+            }
+        elif "gemini" in config.model_name.lower():
+            kwargs['max_tokens'] = 65536
+            kwargs['extra_body'] = {
+                'extra_body':{
+                    'google': {
+                        'thinking_config': {
+                            'thinking_level': 'high'
+                        }
+                    }
                 }
             }
         else:
@@ -126,6 +137,18 @@ async def fix_once(name, config: FixerPromptConfig, client: AsyncOpenAI):
                 "thinking": {
                     "type": "enabled",
                     "budget_tokens": 10000
+                }
+            }
+        elif "gemini" in config.model_name.lower():
+            kwargs['max_tokens'] = 10000
+            kwargs['extra_body'] = {
+                'extra_body':{
+                    'google': {
+                        'thinking_config': {
+                            'include_thoughts': True,
+                            'thinking_level': 'medium'
+                        }
+                    }
                 }
             }
         else:
@@ -339,10 +362,6 @@ async def main(args):
     API_KEY = model_config['fixer']['api_key']
     fixer_client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY, timeout=LLM_TIMEOUT)
 
-    set_tracing_disabled(disabled=True)
-    logfire.configure()
-    logfire.instrument_openai()
-
     # Collect all results
     output_list = []
 
@@ -358,7 +377,7 @@ async def main(args):
             plan = plans[i]
             case_config = ExecutorConfig(
                 system_prompt=system_prompt,
-                model_name=model_config['executor']['model_name'],
+                model_name=model_config['executor']['model'],
                 service_name=f"{logfire_service_name}_plan_{i}",
                 optimization_plan=plan,
                 definition_path=row["definition_path"],
@@ -375,7 +394,7 @@ async def main(args):
             )
 
             fixer_config = FixerPromptConfig(
-                model_name=model_config['fixer']['model_name'],
+                model_name=model_config['fixer']['model'],
                 system_prompt=fixer_system_prompt,
                 user_template=fixer_user_template,
                 log="",
@@ -438,4 +457,8 @@ if __name__ == "__main__":
     parser.add_argument("--fixer_user_template_path", type=str, required=True)
     args = parser.parse_args()
 
+
+    set_tracing_disabled(disabled=True)
+    logfire.configure()
+    logfire.instrument_openai()
     asyncio.run(main(args))

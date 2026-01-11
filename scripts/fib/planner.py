@@ -118,7 +118,9 @@ if __name__ == "__main__":
     parser.add_argument("--model_config_path", type=str, required=True)
     parser.add_argument("--displayed_profiles_path", type=str, required=False, default=None)
     args = parser.parse_args()
-
+    set_tracing_disabled(disabled=True)
+    logfire.configure()
+    logfire.instrument_openai()
     profile_result_path = args.profile_result_path
     base_prompt_path = args.base_prompt_path
     user_template_path = args.user_template_path
@@ -168,10 +170,6 @@ if __name__ == "__main__":
             "record_data": row_data
         }
         all_main_args.append(main_arg)
-
-    set_tracing_disabled(disabled=True)
-    logfire.configure()
-    logfire.instrument_openai()
     
     # Run all queries concurrently without limits
     async def run_all():

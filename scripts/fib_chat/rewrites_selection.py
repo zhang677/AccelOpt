@@ -1,7 +1,6 @@
 import argparse
 from openai import AsyncOpenAI
 from agents import set_tracing_disabled
-from openai.types.chat import ChatCompletion
 from accelopt.utils import retry_query_coroutine, construct_query_coroutine
 from flashinfer_bench import Solution 
 from flashinfer_bench.data import load_json_file
@@ -43,6 +42,17 @@ async def sample_once(config: SummarizerPromptConfig, client, name):
                 "thinking": {
                     "type": "enabled",
                     "budget_tokens": 10000
+                }
+            }
+        elif "gemini" in config.model_name.lower():
+            kwargs['max_tokens'] = 10000
+            kwargs['extra_body'] = {
+                'extra_body':{
+                    'google': {
+                        'thinking_config': {
+                            'thinking_level': 'high'
+                        }
+                    }
                 }
             }
         else:

@@ -23,7 +23,7 @@ timestamp() { date -u +"%Y-%m-%dT%H:%M:%S.%6NZ"; }
 start_time="$(timestamp)"
 
 mkdir -p $EXP_DIR/rewrites
-EXEC="$ACCELOPT_BASE_DIR/scripts/fib/rewrites_selection.py"
+EXEC="$ACCELOPT_BASE_DIR/scripts/fib_chat/rewrites_selection.py"
 EXECUTOR_RESULTS_PATH="$EXP_DIR/candidates/last_iteration_executor_results.json"
 BASE_PROMPT_PATH="$PROMPT_BASE_DIR/summarizer_prompts/base_prompt.txt"
 USER_TEMPLATE_PATH="$PROMPT_BASE_DIR/summarizer_prompts/user_prompt_template.txt"

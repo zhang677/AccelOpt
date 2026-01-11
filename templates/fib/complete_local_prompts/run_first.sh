@@ -36,7 +36,7 @@ python $PLANNER_PROMPT_CONSTRUCTOR_EXEC --original_base_prompt_path $PLANNER_PRO
     --summarizer_output_list_path $CONSTRUCT_EXPERIENCE_OUTPUT_PATH \
     --new_base_prompt_path $PLANNER_PROMPT_CONSTRUCTOR_NEW_BASE_PROMPT_PATH
 
-PLANNER_EXEC="$ACCELOPT_BASE_DIR/scripts/fib/planner.py"
+PLANNER_EXEC="$ACCELOPT_BASE_DIR/scripts/fib_chat/planner.py"
 PLANNER_OUTPUT_PATH="$EXP_DIR/planner_results.json"
 PLANNER_USER_TEMPLATE_PATH="$PROMPT_BASE_DIR/planner_prompts/planner_prompt_template.txt"
 PLANNER_PROFILE_RESULT_PATH="$EXP_DIR/candidates/profile_results.csv"
@@ -51,7 +51,7 @@ python $PLANNER_EXEC --output_path $PLANNER_OUTPUT_PATH \
     --model_config_path $PLANNER_MODEL_CONFIG_PATH
 #    --displayed_profiles_path $PLANNER_DISPLAYED_PROFILES_PATH
 
-SINGLE_EXECUTOR_EXEC="$ACCELOPT_BASE_DIR/scripts/fib/executor_with_fixer.py"
+SINGLE_EXECUTOR_EXEC="$ACCELOPT_BASE_DIR/scripts/fib_chat/executor.py"
 EXECUTOR_BASE_PROMPT_PATH="$PROMPT_BASE_DIR/executor_prompts/base_prompt.txt"
 EXECUTOR_USER_TEMPLATE_PATH="$PROMPT_BASE_DIR/executor_prompts/user_prompt_template.txt"
 FIXER_BASE_PROMPT_PATH="$PROMPT_BASE_DIR/fixer_prompts/base_prompt.txt"

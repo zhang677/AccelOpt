@@ -83,6 +83,17 @@ async def single_query(single_record, client: AsyncOpenAI, config: UserPromptCon
                 "budget_tokens": 10000
             }
         }
+    elif "gemini" in config.model_name.lower():
+        kwargs['max_tokens'] = 10000
+        kwargs['extra_body'] = {
+            'extra_body':{
+                'google': {
+                    'thinking_config': {
+                        'thinking_level': 'high'
+                    }
+                }
+            }
+        }
     else:
         kwargs = {}
     q_co = partial(construct_query_coroutine, client, config.model_name, config.system_prompt, user_prompt, **kwargs)
@@ -122,6 +133,10 @@ if __name__ == "__main__":
     parser.add_argument("--displayed_profiles_path", type=str, required=False, default=None)
     args = parser.parse_args()
 
+    set_tracing_disabled(disabled=True)
+    logfire.configure()
+    logfire.instrument_openai()
+    
     profile_result_path = args.profile_result_path
     with open(args.base_prompt_path, "r") as f:
         base_prompt = f.read()
@@ -166,10 +181,6 @@ if __name__ == "__main__":
             "record_data": row_data
         }
         all_main_args.append(main_arg)
-
-    set_tracing_disabled(disabled=True)
-    logfire.configure()
-    logfire.instrument_openai()
     
     # Run all queries concurrently without limits
     async def run_all():

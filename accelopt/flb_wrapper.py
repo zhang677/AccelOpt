@@ -198,8 +198,12 @@ Type: {definition.op_type}
 Reference Implementation:
 {definition.reference}"""
 
-def get_unique_trace_name(solution: Solution, workload: Trace) -> str:
-    return f"{workload.definition}_{workload.workload.uuid[:7]}_{solution.name}"
+def get_unique_trace_name(solution: Solution | str, workload: Trace) -> str:
+    if isinstance(solution, str):
+        solution_name = solution
+    else:
+        solution_name = solution.name
+    return f"{workload.definition}_{workload.workload.uuid[:7]}_{solution_name}"
 
 def get_workload_stem_name(workload: Trace) -> str:
     return f"{workload.definition}_{workload.workload.uuid[:7]}"
