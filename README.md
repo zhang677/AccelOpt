@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="img/main-method.png" alt="Method" style="width:85%;">
+    <img src="img/main-method-with-fixer.png" alt="Method" style="width:85%;">
 </div> 
 
 # AccelOpt: Self-improving Agents for AI Accelerator Kernel Optimization
