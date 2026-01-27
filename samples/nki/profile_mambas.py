@@ -21,7 +21,7 @@ def _write_temp_kernel(code: str) -> str:
         )
     return temp_path
 
-save_fields_path = "../prompts/profile_list.json"
+save_fields_path = "../../prompts/profile_list.json"
 
 with open(save_fields_path, "r") as f:
     save_fields = json.load(f)
@@ -35,7 +35,7 @@ nki_kernel_paths = [
     "mamba_optimized.py",
 ]
 
-numpy_path = os.path.abspath("../NKIBench/reference/mamba_M7168_C256_S16_numpy_1.py")
+numpy_path = os.path.abspath("../../NKIBench/reference/mamba_M7168_C256_S16_numpy_1.py")
 nki_kernel_paths = [os.path.abspath(p) for p in nki_kernel_paths]
 for nki_kernel_path in nki_kernel_paths:
     with open(nki_kernel_path, "r") as f:

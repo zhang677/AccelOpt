@@ -21,7 +21,7 @@ def _write_temp_kernel(code: str) -> str:
         )
     return temp_path
 
-save_fields_path = "../prompts/profile_list.json"
+save_fields_path = "../../prompts/profile_list.json"
 
 with open(save_fields_path, "r") as f:
     save_fields = json.load(f)
@@ -29,11 +29,11 @@ with open(save_fields_path, "r") as f:
 
 os.environ["NEURON_RT_VISIBLE_CORES"] = '0'
 nki_kernel_paths = [
-    "../NKIBench/kernels/rope_single_freq_apply_B1_H64_N4096_D128_0.py",
+    "../../NKIBench/kernels/rope_single_freq_apply_B1_H64_N4096_D128_0.py",
     "rope_optimized.py",
 ]
 
-numpy_path = os.path.abspath("../NKIBench/reference/rope_single_freq_apply_B1_H64_N4096_D128_numpy_1.py")
+numpy_path = os.path.abspath("../../NKIBench/reference/rope_single_freq_apply_B1_H64_N4096_D128_numpy_1.py")
 nki_kernel_paths = [os.path.abspath(p) for p in nki_kernel_paths]
 for nki_kernel_path in nki_kernel_paths:
     with open(nki_kernel_path, "r") as f:
