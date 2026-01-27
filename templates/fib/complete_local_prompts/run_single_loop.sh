@@ -5,6 +5,7 @@ ITERS=$4
 BREADTH=$5
 TRACESET_ROOT=$6
 FIXER_STEPS=$7
+GPU_ID=$8
 TOPK_CANDIDATES=$10
 NUM_SAMPLES=$11
 MAX_THRESHOLD=$12
@@ -13,6 +14,7 @@ TOPK=$14
 EXP_N=$15
 EXPERIENCE_LIST_PATH="$ACCELOPT_BASE_DIR/prompts/empty_rewrites.json"
 
+export CUDA_VISIBLE_DEVICES=$GPU_ID
 # Only required for the very first iteration
 > "$EXP_BASE_DIR/log.txt"
 echo "$INIT_EXP_DATE" >> "$EXP_BASE_DIR/log.txt"

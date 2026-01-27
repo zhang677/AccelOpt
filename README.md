@@ -54,6 +54,9 @@ python setup.py install
 #### Run
 `experiments/flb_full_complete_local` shows how to run AccelOpt on [FlashInfer-Bench](https://github.com/flashinfer-ai/flashinfer-bench) with a local served gpt-oss-120b.
 
+#### Kernel Database
+We also implemented a kernel database following the schema in `templates/schema_v1.txt` compatible with FlashInfer-Bench. The scripts in this repo still operate on intermediate json files. We will release the kernel database infra in the future.
+
 # NKIBench: Kernel Benchmark for AWS Trainium accelerators
 
 NKIBench is a new benchmark suite of AWS Trainium accelerator kernels with varying complexity
@@ -83,7 +86,7 @@ Per-task kernel improvement achieved using Claude Sonnet 4 and AccelOpt (gpt-oss
 <div align="center">
     <img src="img/compare_bars_with_flashinfer.png" alt="TRN1-result" style="width:75%;">
 </div>
-Triton kernel improvement achieved using AccelOpt with Fixer on H100 SXM5 over FlashInfer across 8 attention workload of FlashInfer-Bench. Fixers and executors use the same model and all the other agents use gpt-oss-120b.
+Triton kernel improvement achieved using AccelOpt with Fixer on H100 SXM5 over FlashInfer across 8 attention workload of FlashInfer-Bench. Fixers and executors use the same model and all the other agents use gpt-oss-120b. These experiements used `./templates/fib/complete_local_prompts/run_single_loop.sh` with `PROMPT_BASE_DIR=./prompts/fib`.
 
 # Citation
 
