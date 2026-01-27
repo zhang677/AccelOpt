@@ -91,6 +91,9 @@ class FlashInferKernelObj:
         result_traceset = benchmark.run_all()
         
         return result_traceset.traces.get(definition.name, [])
+    
+    def create_and_save_solution(self, code, **kwargs) -> str:
+        return create_and_save_solution(self.traceset, self.definition, code, **kwargs)
         
 
 class FlashInferKernel:

@@ -4,7 +4,7 @@
 
 # AccelOpt: Self-improving Agents for AI Accelerator Kernel Optimization
 
-[![arXiv](https://img.shields.io/badge/arXiv-2511.15915-b31b1b.svg)](https://arxiv.org/pdf/2511.15915)
+[![Paper](https://img.shields.io/badge/arXiv-2511.15915-b31b1b.svg)](https://arxiv.org/pdf/2511.15915)
 [![Blog Post](https://img.shields.io/badge/Blog-github.io-blue)](https://zhang677.github.io/blog_md/accelopt.html)
 
 AccelOpt is a self-improving large language model (LLM) agentic system that autonomously optimizes
@@ -81,18 +81,19 @@ NKIBench estimates the best achievable performance offered by the Trainium hardw
 Per-task kernel improvement achieved using Claude Sonnet 4 and AccelOpt (gpt-oss-120b + Qwen3-Coder-480B) on Trainium 1 of NKIBench.
 
 <div align="center">
-    <img src="img/12211705_latency_comparison.png" alt="TRN1-result" style="width:75%;">
+    <img src="img/compare_bars_with_flashinfer.png" alt="TRN1-result" style="width:75%;">
 </div>
-Triton kernel improvement achieved using AccelOpt (gpt-oss-120b) on H100 SXM5 over the best (2025-12-23) across all 9 categories with Triton baselines of FlashInfer-Bench.
+Triton kernel improvement achieved using AccelOpt with Fixer on H100 SXM5 over FlashInfer across 8 attention workload of FlashInfer-Bench. Fixers and executors use the same model and all the other agents use gpt-oss-120b.
 
 # Citation
 
-This work is a follow-up to *Adaptive Self-improvement LLM Agentic System for ML Library Development* (ICML 2025) [[paper](https://arxiv.org/pdf/2502.02534)] [[blog](https://zhang677.github.io/blog_md/aspl.html)] [[code](https://github.com/zhang677/PCL-lite)]. If you find this project useful, please cite:
+This work will appear in MLSys 2026. This is a follow-up to *Adaptive Self-improvement LLM Agentic System for ML Library Development* (ICML 2025) [[paper](https://arxiv.org/pdf/2502.02534)] [[blog](https://zhang677.github.io/blog_md/aspl.html)] [[code](https://github.com/zhang677/PCL-lite)]. If you find this project useful, please cite:
 ```
 @inproceedings{zhang2025adaptive,
   title={Adaptive Self-improvement LLM Agentic System for ML Library Development},
   author={Zhang, Genghan and Liang, Weixin and Hsu, Olivia and Olukotun, Kunle},
-  booktitle={Forty-second International Conference on Machine Learning}
+  booktitle={Proceedings of the 42nd International Conference on Machine Learning},
+  year={2025}
 }
 
 @article{zhang2025accelopt,

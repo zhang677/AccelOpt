@@ -129,7 +129,7 @@ async def fix_once(name, config: FixerPromptConfig, client: AsyncOpenAI):
         kwargs = {}
         if "gpt-oss" in config.model_name.lower():
             kwargs['extra_body'] = {'reasoning_effort': 'medium'}
-            kwargs['max_tokens'] = 10000
+            kwargs['max_tokens'] = 65536
         elif "claude" in config.model_name.lower():
             kwargs['temperature'] = 1.0  # Temperature must be 1.0 for reasoning to be enabled
             kwargs['max_tokens'] = 20000
@@ -140,12 +140,11 @@ async def fix_once(name, config: FixerPromptConfig, client: AsyncOpenAI):
                 }
             }
         elif "gemini" in config.model_name.lower():
-            kwargs['max_tokens'] = 10000
+            kwargs['max_tokens'] = 65536
             kwargs['extra_body'] = {
                 'extra_body':{
                     'google': {
                         'thinking_config': {
-                            'include_thoughts': True,
                             'thinking_level': 'medium'
                         }
                     }
