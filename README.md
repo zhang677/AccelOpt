@@ -90,7 +90,7 @@ Triton kernel improvement achieved using AccelOpt with Fixer on H100 SXM5 over F
 
 # Citation
 
-This work will appear in MLSys 2026. This is a follow-up to *Adaptive Self-improvement LLM Agentic System for ML Library Development* (ICML 2025) [[paper](https://arxiv.org/pdf/2502.02534)] [[blog](https://zhang677.github.io/blog_md/aspl.html)] [[code](https://github.com/zhang677/PCL-lite)]. If you find this project useful, please cite:
+This work will appear in MLSys 2026. This is a follow-up to *Adaptive Self-improvement LLM Agentic System for ML Library Development* (ICML 2025) [[paper](https://proceedings.mlr.press/v267/zhang25at.html)] [[blog](https://zhang677.github.io/blog_md/aspl.html)] [[code](https://github.com/zhang677/PCL-lite)]. If you find this project useful, please cite:
 ```
 @inproceedings{zhang2025adaptive,
   title={Adaptive Self-improvement LLM Agentic System for ML Library Development},
