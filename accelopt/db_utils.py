@@ -61,14 +61,14 @@ def definition_orm(obj: Definition):
         "definition": obj.model_dump(mode="json", exclude_unset=True),
     }
 
-def workload_orm(supabase_client: Client, obj: Trace):
+def workload_orm(obj: Trace):
     def_name = obj.definition
     return {
         "definition_name": def_name,
         "workload": obj.model_dump(mode="json", exclude_unset=True, exclude={'solution', 'evaluation'}) # Exclude solution and evaluation
     }
 
-def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
+def solution_orm(obj: Solution, hash_version: int = 1):
     assert obj.spec.language in ["triton", "python"], "Only 'triton' and 'python' solutions are supported in this ORM."
     def_name = obj.definition
     if hash_version == 1:
@@ -83,7 +83,7 @@ def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
         "evolve_metadata": {}
     }
 
-def profile_orm(supabase_client: Client, obj: Trace, bench_config: BenchmarkConfig, solution_id: str):
+def profile_orm(obj: Trace, bench_config: BenchmarkConfig, solution_id: str):
     workload_uuid = obj.workload.uuid
 
     perf_data, bench_config_hash = get_benchmark_config_hash(bench_config)
