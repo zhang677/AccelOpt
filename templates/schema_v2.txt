@@ -1,0 +1,58 @@
+CREATE TABLE definitions (
+  name TEXT PRIMARY KEY GENERATED ALWAYS AS (definition->>'name') STORED,
+
+  definition JSONB NOT NULL,
+
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE workloads (
+  uuid TEXT PRIMARY KEY GENERATED ALWAYS AS (workload->'workload'->>'uuid') STORED,
+
+  definition_name TEXT NOT NULL REFERENCES definitions(name) ON DELETE CASCADE,
+  workload JSONB NOT NULL,
+
+  -- The "Promoted" columns (automatically extracted and indexed)
+
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE solutions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  definition_name TEXT NOT NULL REFERENCES definitions(name) ON DELETE CASCADE,
+  parent_id UUID REFERENCES solutions(id) ON DELETE SET NULL,
+
+  solution JSONB NOT NULL,
+  hash_version INT DEFAULT 1,
+  solution_hash TEXT NOT NULL,
+  UNIQUE(solution_hash, hash_version),
+
+  evolve_metadata JSONB NOT NULL,
+  spec_language TEXT GENERATED ALWAYS AS (solution->'spec'->>'language') STORED NOT NULL,
+  author TEXT GENERATED ALWAYS AS (solution->>'author') STORED NOT NULL,
+
+  created_at TIMESTAMPTZ DEFAULT now()
+)
+
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workload_uuid TEXT NOT NULL REFERENCES workloads(uuid) ON DELETE CASCADE,
+  solution_id UUID NOT NULL REFERENCES solutions(id) ON DELETE CASCADE,
+
+  evaluation JSONB NOT NULL,
+  benchmark_config JSONB NOT NULL, -- Partial BenchmarkConfig
+  benchmark_config_hash TEXT NOT NULL, -- SHA256 of benchmark_config
+  
+  -- The "Promoted" columns (automatically extracted and indexed)
+  eval_status TEXT GENERATED ALWAYS AS (evaluation->>'status') STORED NOT NULL,
+  eval_hardware TEXT GENERATED ALWAYS AS (evaluation->'environment'->>'hardware') STORED NOT NULL,
+  latency_ms FLOAT GENERATED ALWAYS AS ((evaluation->'performance'->>'latency_ms')::float) STORED,
+  reference_latency_ms FLOAT GENERATED ALWAYS AS ((evaluation->'performance'->>'reference_latency_ms')::float) STORED,
+  speedup FLOAT GENERATED ALWAYS AS ((evaluation->'performance'->>'speedup')::float) STORED,
+
+  created_at TIMESTAMPTZ DEFAULT now(),
+
+  -- Unique entry for this specific Program + Workload + BenchmarkConfig combo
+  UNIQUE(workload_uuid, solution_id, benchmark_config_hash, eval_hardware)
+
+);
