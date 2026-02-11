@@ -12,7 +12,7 @@ def try_upsert(supabase_client: Client, table_name: str, data: dict):
         "definitions": "name",
         "workloads": "workload_uuid",
         "solutions": "solution_hash,hash_version",
-        "profiles": "workload_id,solution_id,benchmark_config_hash,eval_hardware"
+        "profiles": "workload_uuid,solution_id,benchmark_config_hash,eval_hardware"
     }
     
     try:
@@ -63,32 +63,20 @@ def definition_orm(obj: Definition):
 
 def workload_orm(supabase_client: Client, obj: Trace):
     def_name = obj.definition
-    # Get the definition_id based on the def_name
-    response = supabase_client.table("definitions").select("id").eq("name", def_name).execute()
-    if response.data:
-        definition_id = response.data[0]['id']
-    else:
-        raise ValueError(f"Definition with name '{def_name}' not found in the database.")
     return {
-        "definition_id": definition_id,
+        "definition_name": def_name,
         "workload": obj.model_dump(mode="json", exclude_unset=True, exclude={'solution', 'evaluation'}) # Exclude solution and evaluation
     }
 
 def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
     assert obj.spec.language in ["triton", "python"], "Only 'triton' and 'python' solutions are supported in this ORM."
     def_name = obj.definition
-    # Get the definition_id based on the def_name
-    response = supabase_client.table("definitions").select("id").eq("name", def_name).execute()
-    if response.data:
-        definition_id = response.data[0]['id']
-    else:
-        raise ValueError(f"Definition with name '{def_name}' not found in the database.")
     if hash_version == 1:
         code_hash = get_solution_hash(obj, hash_version=hash_version)
     else:
         raise ValueError(f"Unsupported hash_version: {hash_version}")
     return {
-        "definition_id": definition_id,
+        "definition_name": def_name,
         "solution": obj.model_dump(mode="json", exclude_unset=True),
         "hash_version": hash_version,
         "solution_hash": code_hash,
@@ -97,18 +85,13 @@ def solution_orm(supabase_client: Client, obj: Solution, hash_version: int = 1):
 
 def profile_orm(supabase_client: Client, obj: Trace, bench_config: BenchmarkConfig, solution_id: str):
     workload_uuid = obj.workload.uuid
-    response = supabase_client.table("workloads").select("id").eq("workload_uuid", workload_uuid).execute()
-    if response.data:
-        workload_id = response.data[0]['id']
-    else:
-        raise ValueError(f"Workload with uuid '{workload_uuid}' not found in the database.")
-    
+
     perf_data, bench_config_hash = get_benchmark_config_hash(bench_config)
     # evaluation_dict = obj.evaluation.model_dump(mode="json", exclude_unset=True)
     evaluation_dict = json.loads(obj.evaluation.model_dump_json(exclude_unset=True))
 
     return {
-        "workload_id": workload_id,
+        "workload_uuid": workload_uuid,
         "solution_id": solution_id,
         "evaluation": evaluation_dict,
         "benchmark_config": perf_data,
@@ -125,7 +108,7 @@ def solution_to_obj(data) -> Solution:
     return Solution.model_validate(data["solution"])
 
 def profile_to_obj(supabase_client: Client, data) -> Trace:
-    workload_data = supabase_client.table("workloads").select("workload").eq("id", data["workload_id"]).execute().data[0]["workload"]
+    workload_data = supabase_client.table("workloads").select("workload").eq("uuid", data["workload_uuid"]).execute().data[0]["workload"]
     solution = supabase_client.table("solutions").select("solution").eq("id", data["solution_id"]).execute().data[0]["solution"]["name"]
     evaluation_data = data["evaluation"]
     trace = Trace.model_validate(workload_data)
