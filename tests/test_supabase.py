@@ -1,6 +1,9 @@
 import requests
 from supabase import create_client, Client
 import os
+
+# Refer to AccelOpt/templates/schema_v2.txt for the database schema. 
+
 # --- CONFIGURATION (Replace these with your actual Supabase URL and remember to set your Service Role Key) ---
 SUPABASE_URL = "http://localhost:8000"  # Kong port
 # Use the SERVICE_ROLE_KEY to bypass Row Level Security (RLS)
