@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def try_upsert(supabase_client: Client, table_name: str, data: dict):
     conflict_columns = {
         "definitions": "name",
-        "workloads": "workload_uuid",
+        "workloads": "uuid",
         "solutions": "solution_hash,hash_version",
         "profiles": "workload_uuid,solution_id,benchmark_config_hash,eval_hardware"
     }
@@ -29,9 +29,17 @@ def try_upsert(supabase_client: Client, table_name: str, data: dict):
 
 def get_solution_hash(solution: Solution, hash_version: int = 1) -> str:
     if hash_version == 1:
-        assert solution.spec.language in ["triton", "python"], "Only 'triton' and 'python' solutions are supported in this hash."
-        source_code = solution.sources[0].content
-        code_hash = sha256(source_code.encode('utf-8')).hexdigest()
+        assert solution.spec.language in ["triton", "python", "cuda"], "Only 'triton', 'python', and 'cuda' solutions are supported in this hash."
+        if solution.spec.language == "cuda":
+            # Hash all source files (sorted by path for determinism)
+            all_content = "".join(
+                s.path + s.content
+                for s in sorted(solution.sources, key=lambda x: x.path)
+            )
+            code_hash = sha256(all_content.encode('utf-8')).hexdigest()
+        else:
+            source_code = solution.sources[0].content
+            code_hash = sha256(source_code.encode('utf-8')).hexdigest()
     else:
         raise ValueError(f"Unsupported hash_version: {hash_version}")
     return code_hash
@@ -69,7 +77,7 @@ def workload_orm(obj: Trace):
     }
 
 def solution_orm(obj: Solution, hash_version: int = 1):
-    assert obj.spec.language in ["triton", "python"], "Only 'triton' and 'python' solutions are supported in this ORM."
+    assert obj.spec.language in ["triton", "python", "cuda"], "Only 'triton', 'python', and 'cuda' solutions are supported in this ORM."
     def_name = obj.definition
     if hash_version == 1:
         code_hash = get_solution_hash(obj, hash_version=hash_version)

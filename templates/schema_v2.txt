@@ -12,8 +12,6 @@ CREATE TABLE workloads (
   definition_name TEXT NOT NULL REFERENCES definitions(name) ON DELETE CASCADE,
   workload JSONB NOT NULL,
 
-  -- The "Promoted" columns (automatically extracted and indexed)
-
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
