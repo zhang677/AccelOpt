@@ -77,16 +77,20 @@ result = nki_kernel.profile(save_fields)
 
 NKIBench estimates the best achievable performance offered by the Trainium hardware, which offers additional insights on how effective AccelOpt has been in exploring the entire optimization landscape. The best achievable performance is calculated in `experiments/full_complete_local/calculate_percentage_of_peak.py`
 
-# Results on NKIBench and FlashInfer-Bench
+# Results 
+## NKIBench
 <div align="center">
     <img src="img/ratio_bars_trn1.png" alt="TRN1-result" style="width:85%;">
 </div>
 Per-task kernel improvement achieved using Claude Sonnet 4 and AccelOpt (gpt-oss-120b + Qwen3-Coder-480B) on Trainium 1 of NKIBench.
 
+## FlashInfer-Bench
+Developed concurrently, NKIBench and FlashInfer-Bench share similar kernel schema, demonstrating the benefits of structual storage. `./templates/schema_v2.txt` shows the SQL schema we use to manage generated kernels for Flashinfer-Bench.
+
 <div align="center">
     <img src="img/compare_bars_with_flashinfer.png" alt="TRN1-result" style="width:75%;">
 </div>
-Triton kernel improvement achieved using AccelOpt with Fixer on H100 SXM5 over FlashInfer across 8 attention workload of FlashInfer-Bench. Fixers and executors use the same model and all the other agents use gpt-oss-120b. These experiements used `./templates/fib/complete_local_prompts/run_single_loop.sh` with `PROMPT_BASE_DIR=./prompts/fib`. `./templates/schema_v2.txt` shows the database schema for Flashinfer-Bench that we use to manage generated kernels.
+Triton kernel improvement achieved using AccelOpt with Fixer on H100 SXM5 over FlashInfer across 8 attention workload of FlashInfer-Bench. Fixers and executors use the same model and all the other agents use gpt-oss-120b. These experiements used `./templates/fib/complete_local_prompts/run_single_loop.sh` with `PROMPT_BASE_DIR=./prompts/fib`. 
 
 # Citation
 
