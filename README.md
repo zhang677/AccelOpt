@@ -77,7 +77,7 @@ result = nki_kernel.profile(save_fields)
 
 NKIBench estimates the best achievable performance offered by the Trainium hardware, which offers additional insights on how effective AccelOpt has been in exploring the entire optimization landscape. The best achievable performance is calculated in `experiments/full_complete_local/calculate_percentage_of_peak.py`
 
-# Result
+# Result on NKIBench and FlashInfer-Bench
 <div align="center">
     <img src="img/ratio_bars_trn1.png" alt="TRN1-result" style="width:85%;">
 </div>
