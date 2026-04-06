@@ -15,7 +15,7 @@ optimization memory that curates experiences and insights from previously encoun
 🚧 This repository is still under construction.
 
 ## Setup
-### Trainium 
+### AWS Trainium 
 #### Machines
 EC2 Instance: trn1.32xlarge
 
@@ -54,8 +54,8 @@ python setup.py install
 #### Run
 `experiments/flb_full_complete_local` shows how to run AccelOpt on [FlashInfer-Bench](https://github.com/flashinfer-ai/flashinfer-bench) with a local served gpt-oss-120b.
 
-#### Kernel Database
-We also implemented a kernel database following the schema in `templates/schema_v1.txt` compatible with FlashInfer-Bench. The scripts in this repo still operate on intermediate json files. We will release the kernel database infra in the future.
+## Kernel Database
+Developed concurrently, NKIBench and FlashInfer-Bench share similar kernel schema, demonstrating the benefits of structual storage. `./templates/schema_v2.txt` shows the SQL schema we use to manage generated kernels for Flashinfer-Bench. `./accelopt/db_utils.py` captures the common usage patterns of this kernel database with [supabase](https://supabase.com/).
 
 # NKIBench: Kernel Benchmark for AWS Trainium accelerators
 
@@ -85,8 +85,6 @@ NKIBench estimates the best achievable performance offered by the Trainium hardw
 Per-task kernel improvement achieved using Claude Sonnet 4 and AccelOpt (gpt-oss-120b + Qwen3-Coder-480B) on Trainium 1 of NKIBench.
 
 ## FlashInfer-Bench
-Developed concurrently, NKIBench and FlashInfer-Bench share similar kernel schema, demonstrating the benefits of structual storage. `./templates/schema_v2.txt` shows the SQL schema we use to manage generated kernels for Flashinfer-Bench.
-
 <div align="center">
     <img src="img/compare_bars_with_flashinfer.png" alt="TRN1-result" style="width:75%;">
 </div>
