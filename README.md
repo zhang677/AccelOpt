@@ -57,10 +57,9 @@ python setup.py install
 ## Kernel Database
 Developed concurrently, NKIBench and FlashInfer-Bench share similar kernel schema, demonstrating the benefits of structual storage. `./templates/schema_v2.txt` shows the SQL schema we use to manage generated kernels for Flashinfer-Bench. `./accelopt/db_utils.py` captures the common usage patterns of this kernel database with [supabase](https://supabase.com/).
 
-# NKIBench: Kernel Benchmark for AWS Trainium accelerators
+# NKIBench: Agent Environment for AWS Trainium accelerators
 
-NKIBench is a new benchmark suite of AWS Trainium accelerator kernels with varying complexity
-extracted from real-world LLM workloads to evaluate the effectiveness of AccelOpt. 
+NKIBench is the first agent environemt for AWS Trainium accelerators that contain a profiling service and a set of NKI kernels with varying complexity extracted from real-world LLM workloads. 
 
 ## Dataset
 All the kernels are under `/NKIBench`. Kernels are
