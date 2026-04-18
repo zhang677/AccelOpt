@@ -6,6 +6,7 @@
 
 [![Paper](https://img.shields.io/badge/arXiv-2511.15915-b31b1b.svg)](https://arxiv.org/pdf/2511.15915)
 [![Blog Post](https://img.shields.io/badge/Blog-accelopt.html-blue)](https://ppl.stanford.edu/accelopt.html)
+[![HuggingFace](https://img.shields.io/badge/🤗-NKIBench-yellow)](https://huggingface.co/datasets/Genghan/NKIBench)
 
 AccelOpt is a self-improving large language model (LLM) agentic system that autonomously optimizes
 kernels for emerging AI acclerators, eliminating the need for expert-provided hardware-specific optimization
@@ -59,7 +60,7 @@ Developed concurrently, NKIBench and FlashInfer-Bench share similar kernel schem
 
 # NKIBench: Agent Environment for AWS Trainium accelerators
 
-NKIBench is the first agent environemt for AWS Trainium accelerators that contain a profiling service and a set of NKI kernels with varying complexity extracted from real-world LLM workloads. 
+NKIBench is the first agent environemt for AWS Trainium accelerators that contain a profiling service and a set of NKI kernels with varying complexity extracted from real-world LLM workloads. Huggingface dataset can be found here [Genghan/NKIBench](https://huggingface.co/datasets/Genghan/NKIBench).
 
 ## Dataset
 All the kernels are under `/NKIBench`. Kernels are
