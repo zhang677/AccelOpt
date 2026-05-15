@@ -1,6 +1,6 @@
 ---
 name: accelopt
-description: Optimize a kernel and store the optimization trace in a folder
+description: Optimize a kernel and store the optimization trace in a kernel database
 argument-hint: [kernel-path], [supabase-url]
 ---
 
