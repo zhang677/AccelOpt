@@ -126,6 +126,7 @@ class NKIKernel:
                     print(f"Retry: {self.program_path } at {len(rel_diff_list)}; rel_diffs: {rel_diff_list}")
                     time.sleep(1)
                     runtime_stats = benchmark_latency(2, 10, nki_kernel_fn, nki_inputs, artifact_dir)
+                    rel_diff = runtime_stats["rel_diffs"]
                     rel_diff_list.append(rel_diff)
                     runtime_stats_list.append(runtime_stats)
                     if len(rel_diff_list) > 2: # Just retry twice. In paper, we did 10 times.
