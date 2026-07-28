@@ -101,12 +101,17 @@ This work was accepted by MLSys 2026. This is a follow-up to *Adaptive Self-impr
   year={2025}
 }
 
-@article{zhang2026accelopt, 
-  title={AccelOpt: A Self-Improving LLM Agentic System for AI Accelerator Kernel Optimization}, 
-  author={Zhang, Genghan and Zhu, Shaowei and Wei, Anjiang and Song, Zhenyu and Nie, Allen and Jia, Zhen and Vijaykumar, Nandita and Wang, Yida and Olukotun, Kunle}, 
-  journal={Proceedings of Machine Learning and Systems}, 
-  volume={9}, 
-  year={2026} 
+@inproceedings{zhang2026accelopt,
+ author = {Zhang, Genghan and Zhu, Shaowei and Wei, Anjiang and Song, Zhenyu and Nie, Allen and Jia, Zhen and Vijaykumar, Nandita and Wang, Yida and Olukotun, Kunle},
+ booktitle = {Proceedings of Machine Learning and Systems},
+ editor = {A. Chowdhery and Z. Jia},
+ pages = {541--568},
+ publisher = {MLSys},
+ title = {AccelOpt: A Self-Improving LLM Agentic System for AI Accelerator Kernel Optimization},
+ url = {https://proceedings.mlsys.org/paper_files/paper/2026/file/0f8426558905746fc38da5e335700aec-Paper-Conference.pdf},
+ volume = {8},
+ year = {2026}
 }
+
 ```
 
